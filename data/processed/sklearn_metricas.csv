@@ -1,0 +1,6 @@
+modelo,alpha_seleccionada,r2_entrenamiento,r2_prueba,rmse_prueba,mae_prueba,mape_prueba_pct,r2_cv_media,r2_cv_desv,rmse_cv_media,rmse_cv_desv
+MCO (sin penalización),-,0.9989,0.9944,36.26,18.83,3.68,0.996,0.0044,25.49,10.53
+"Ridge (L2, α ajustada)",0.01,0.9989,0.9944,36.29,18.88,3.68,0.996,0.0044,25.45,10.51
+"Lasso (L1, α ajustada)",0.01,0.9989,0.9944,36.2,18.79,3.67,0.996,0.0044,25.5,10.52
+"ElasticNet (α ajustada, l1 = 0,5)",0.001,0.9988,0.9943,36.45,19.18,3.74,0.9959,0.0045,25.46,10.58
+MCO sobre log(costo),-,0.9969,0.9926,41.62,24.74,4.34,0.9933,0.0057,35.49,12.79

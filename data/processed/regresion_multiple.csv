@@ -1,0 +1,7 @@
+termino,coeficiente,error_std,estadistico_t,p_valor,ic95_inferior,ic95_superior,vif
+Intercepto (Residencial),7.1067,13.6264,0.52,6.03e-01,-19.8872,34.1005,
+Sector Comercial (Δ intercepto),-2.6594,22.3549,-0.12,9.06e-01,-46.9442,41.6255,20.58
+Sector Industrial (Δ intercepto),-71.9656,28.1145,-2.56,1.18e-02,-127.6602,-16.271,18.67
+consumo_kwh (pendiente Residencial),0.7916,0.0533,14.85,2.05e-28,0.686,0.8972,398.68
+consumo × Comercial (Δ pendiente),-0.0868,0.0568,-1.53,1.29e-01,-0.1994,0.0257,110.84
+consumo × Industrial (Δ pendiente),-0.1206,0.0541,-2.23,2.77e-02,-0.2277,-0.0135,522.47

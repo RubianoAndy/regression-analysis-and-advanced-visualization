@@ -1,0 +1,5 @@
+termino,coeficiente,error_std,estadistico_t,p_valor,ic95_inferior,ic95_superior,vif
+Intercepto (Residencial),-0.1186,0.084,-1.41,1.61e-01,-0.285,0.0479,
+Sector Comercial,-0.1272,0.0211,-6.04,1.90e-08,-0.1689,-0.0855,6.87
+Sector Industrial,-0.2076,0.0378,-5.49,2.43e-07,-0.2825,-0.1327,12.73
+log(consumo) · elasticidad,0.9856,0.0153,64.47,1.07e-92,0.9554,1.0159,13.54
