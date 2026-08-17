@@ -1,6 +1,0 @@
-,consumo_kwh,costo_miles_cop,tarifa_cop_kwh,log_consumo,log_costo
-consumo_kwh,1.0,0.9984,-0.7639,0.9154,0.918
-costo_miles_cop,0.9984,1.0,-0.7525,0.9198,0.9244
-tarifa_cop_kwh,-0.7639,-0.7525,1.0,-0.88,-0.8517
-log_consumo,0.9154,0.9198,-0.88,1.0,0.9984
-log_costo,0.918,0.9244,-0.8517,0.9984,1.0

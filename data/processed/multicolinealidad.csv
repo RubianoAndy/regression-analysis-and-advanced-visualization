@@ -1,4 +1,0 @@
-especificacion,vif_maximo,numero_condicion,r2,rmse
-M3 · consumo sin centrar,522.47,20803.7,0.99799,24.8
-M3 · centrado en la media global,398.68,25962.4,0.99799,24.8
-M3 · centrado dentro de cada sector,43.55,1209.2,0.99799,24.8

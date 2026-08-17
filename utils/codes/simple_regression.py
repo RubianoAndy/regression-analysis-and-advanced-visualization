@@ -52,7 +52,7 @@ dataset_path = DATA_DIR / "consumo_energia.csv"
 if not dataset_path.exists():
     raise SystemExit(
         f"No se encontró {dataset_path}. Ejecuta antes la Fase 0: "
-        "python utils/codes/statistics.py"
+        "python utils/codes/dataset.py"
     )
 df = pd.read_csv(dataset_path)
 df["sector"] = pd.Categorical(df["sector"], categories=SECTOR_ORDER, ordered=True)
@@ -167,18 +167,25 @@ print(f"Tarifa implícita en la pendiente: {b1 * 1000:,.1f} COP/kWh")
 
 """4. FIGURAS DE LA REGRESIÓN SIMPLE.
 
-Cada figura responde una pregunta: si hay relación, cuánta incertidumbre
+Cada figura responde una pregunta: si hay relación y cuánta incertidumbre
 tiene la recta, si se cumplen los supuestos y dónde falla el modelo.
 """
 
-"""Diagrama de dispersión con la recta ajustada y su ecuación: la vista
-canónica de una regresión simple, con el color reservado para el sector, que
-todavía no forma parte del modelo."""
+"""Diagrama de dispersión con la recta ajustada, su ecuación y las dos bandas
+de incertidumbre: la estrecha acota dónde está la recta media de la población
+y la ancha dónde caerá una factura individual. El color queda reservado para
+el sector, que todavía no forma parte del modelo."""
 grid = np.linspace(df["consumo_kwh"].min(), df["consumo_kwh"].max(), 200)
 pred = modelo_simple.get_prediction(
     pd.DataFrame({"consumo_kwh": grid})).summary_frame(alpha=0.05)
 
-fig, ax = plt.subplots(figsize=(7.0, 4.2))
+fig, ax = plt.subplots(figsize=(7.4, 4.4))
+ax.fill_between(grid, pred["obs_ci_lower"], pred["obs_ci_upper"],
+                color="#2b8cbe", alpha=0.12,
+                label="Intervalo de predicción 95 % (una factura)")
+ax.fill_between(grid, pred["mean_ci_lower"], pred["mean_ci_upper"],
+                color=ACCENT, alpha=0.30,
+                label="Intervalo de confianza 95 % (recta media)")
 for s in SECTOR_ORDER:
     sub = df[df["sector"] == s]
     ax.scatter(sub["consumo_kwh"], sub["costo_miles_cop"], s=26,
@@ -192,28 +199,6 @@ ax.set_ylabel("Costo facturado (miles de COP)")
 ax.legend(fontsize=8, loc="upper left")
 fig.tight_layout()
 fig.savefig(FIGURES_DIR / "dispersion_ajuste_simple.png")
-plt.close(fig)
-
-"""Bandas de confianza y de predicción: la primera acota dónde está la recta
-media y la segunda dónde caerá una factura individual. Su diferencia de
-amplitud es la distinción entre estimar un promedio y predecir un caso."""
-fig, ax = plt.subplots(figsize=(7.0, 4.2))
-ax.fill_between(grid, pred["obs_ci_lower"], pred["obs_ci_upper"],
-                color="#2b8cbe", alpha=0.12,
-                label="Intervalo de predicción 95 % (una factura)")
-ax.fill_between(grid, pred["mean_ci_lower"], pred["mean_ci_upper"],
-                color=ACCENT, alpha=0.30,
-                label="Intervalo de confianza 95 % (recta media)")
-ax.scatter(df["consumo_kwh"], df["costo_miles_cop"], s=18, color="#2c7fb8",
-           alpha=0.65, edgecolor="white", linewidth=0.4, label="Observaciones")
-ax.plot(grid, pred["mean"], color=ACCENT, lw=1.8, label="Recta ajustada")
-ax.set_title("Incertidumbre del ajuste: confianza de la recta frente a "
-             "predicción individual")
-ax.set_xlabel("Consumo (kWh/mes)")
-ax.set_ylabel("Costo facturado (miles de COP)")
-ax.legend(fontsize=8, loc="upper left")
-fig.tight_layout()
-fig.savefig(FIGURES_DIR / "bandas_confianza_prediccion.png")
 plt.close(fig)
 
 """Panel de diagnóstico en cuatro vistas. El color por sector convierte un

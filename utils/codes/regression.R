@@ -1,11 +1,11 @@
 #' Actividad 4 - Fase 5: verificacion cruzada de la regresion en R.
 #'
-#' Reestima con lm() los mismos modelos que la Fase 2 ajusto con statsmodels
-#' —simple, multiple con interaccion y log-log—, contrasta los modelos
-#' anidados con anova() y compara coeficiente a coeficiente contra las tablas
-#' que escribio Python. Las figuras se reparten a proposito entre los dos
-#' sistemas graficos de R: ggplot2 para las vistas del ajuste y la graficacion
-#' base para el diagnostico canonico plot(modelo).
+#' Reestima con lm() los mismos tres modelos que la Fase 2 ajusto con
+#' statsmodels, contrasta los modelos anidados con anova() y compara
+#' coeficiente a coeficiente contra las tablas que escribio Python. Las
+#' figuras se reparten a proposito entre los dos sistemas graficos de R:
+#' ggplot2 para las vistas del ajuste y la graficacion base para el
+#' diagnostico canonico plot(modelo).
 #'
 #' Ejecutar desde la raiz del proyecto. Escribe las tablas en data/processed y
 #' las imagenes en public/assets/images/figures/r/regression/.
@@ -37,39 +37,32 @@ n <- nrow(df)
 #' el primero del factor, de modo que los coeficientes coinciden uno a uno con
 #' los de Python.
 m1 <- lm(costo_miles_cop ~ consumo_kwh, data = df)
+m2 <- lm(costo_miles_cop ~ consumo_kwh + sector, data = df)
 m3 <- lm(costo_miles_cop ~ consumo_kwh * sector, data = df)
-m4 <- lm(log(costo_miles_cop) ~ log(consumo_kwh) + sector, data = df)
 
 cat("=== M1 - regresion lineal simple ===\n")
 print(summary(m1))
 cat("\n=== M3 - regresion multiple con interaccion ===\n")
 print(summary(m3))
-cat("\n=== M4 - modelo log-log ===\n")
-print(summary(m4))
 
 #' 2. CONTRASTE DE MODELOS ANIDADOS Y METRICAS COMPARABLES.
 cat("\n=== Contraste F entre modelos anidados ===\n")
-m2 <- lm(costo_miles_cop ~ consumo_kwh + sector, data = df)
 print(anova(m1, m2, m3))
 
 rmse <- function(observado, predicho) sqrt(mean((observado - predicho)^2))
-factor_duan <- mean(exp(residuals(m4)))
-pred_m4 <- exp(fitted(m4)) * factor_duan
-jacobiano <- sum(log(df$costo_miles_cop))
 
 metricas <- data.frame(
-  modelo = c("M1 - Simple", "M2 - Aditivo", "M3 - Interaccion", "M4 - Log-log"),
+  modelo = c("M1 - Simple", "M2 - Aditivo", "M3 - Interaccion"),
   r2 = round(c(summary(m1)$r.squared, summary(m2)$r.squared,
-               summary(m3)$r.squared, summary(m4)$r.squared), 4),
+               summary(m3)$r.squared), 4),
   r2_ajustado = round(c(summary(m1)$adj.r.squared, summary(m2)$adj.r.squared,
-                        summary(m3)$adj.r.squared, summary(m4)$adj.r.squared), 4),
-  aic = round(c(AIC(m1), AIC(m2), AIC(m3), AIC(m4) + 2 * jacobiano), 1),
+                        summary(m3)$adj.r.squared), 4),
+  aic = round(c(AIC(m1), AIC(m2), AIC(m3)), 1),
   rmse = round(c(rmse(df$costo_miles_cop, fitted(m1)),
                  rmse(df$costo_miles_cop, fitted(m2)),
-                 rmse(df$costo_miles_cop, fitted(m3)),
-                 rmse(df$costo_miles_cop, pred_m4)), 2)
+                 rmse(df$costo_miles_cop, fitted(m3))), 2)
 )
-cat("\n=== Metricas de los cuatro modelos (R) ===\n")
+cat("\n=== Metricas de los tres modelos (R) ===\n")
 print(metricas, row.names = FALSE)
 cat("Nota: el AIC de R supera en 2,0 al de statsmodels porque R cuenta la\n",
     "varianza residual como un parametro mas. La diferencia es constante y\n",
@@ -202,29 +195,6 @@ g3 <- ggplot(residuos, aes(x = sector, y = residuo, fill = sector)) +
 ggsave(file.path(figures_dir, "ggplot_residuos_por_sector.png"), g3,
        width = 9.0, height = 4.0, dpi = 150, type = "cairo")
 
-#' Coeficientes con su intervalo de confianza, separando interceptos de
-#' pendientes porque estan en escalas distintas.
-ic <- as.data.frame(confint(m3))
-names(ic) <- c("inferior", "superior")
-ic$termino <- rownames(ic)
-ic$coeficiente <- coef(m3)
-ic$bloque <- ifelse(grepl("consumo_kwh", ic$termino),
-                    "Pendientes (miles de COP por kWh)",
-                    "Interceptos (miles de COP)")
-ic$termino <- factor(ic$termino, levels = rev(ic$termino))
-g4 <- ggplot(ic, aes(x = coeficiente, y = termino)) +
-  geom_vline(xintercept = 0, color = accent, linetype = "dashed",
-             linewidth = 0.7) +
-  geom_pointrange(aes(xmin = inferior, xmax = superior), color = "#2b8cbe",
-                  linewidth = 0.8, size = 0.5) +
-  facet_wrap(~ bloque, scales = "free") +
-  labs(title = "Coeficientes de M3 con intervalo de confianza al 95 % (R)",
-       x = "Coeficiente", y = NULL) +
-  tema_informe +
-  theme(axis.text.y = element_text(size = 8))
-ggsave(file.path(figures_dir, "ggplot_coeficientes.png"), g4,
-       width = 10.0, height = 3.6, dpi = 150, type = "cairo")
-
 #' 5. DIAGNOSTICO CANONICO CON LA GRAFICACION BASE.
 #'
 #' plot(modelo) devuelve las cuatro vistas clasicas del diagnostico de un lm
@@ -235,12 +205,6 @@ png(file.path(figures_dir, "base_diagnostico_m1.png"),
     width = 2100, height = 1500, res = 200, type = "cairo")
 par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
 plot(m1, col = "#2c7fb8", pch = 19, cex = 0.6)
-dev.off()
-
-png(file.path(figures_dir, "base_diagnostico_m3.png"),
-    width = 2100, height = 1500, res = 200, type = "cairo")
-par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
-plot(m3, col = "#2c7fb8", pch = 19, cex = 0.6)
 dev.off()
 
 cat("\nOK - Fase 5: verificacion cruzada en R y figuras generadas\n")

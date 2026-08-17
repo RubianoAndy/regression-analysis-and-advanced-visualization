@@ -1,9 +1,0 @@
-herramienta,figura,aporte
-seaborn,sns_matriz_dispersion.png,Cruza todas las variables y revela la separación por sector
-seaborn,sns_heatmap_correlacion.png,Resume la matriz de correlación con paleta divergente
-seaborn,sns_lmplot_sectores.png,Una regresión con banda de confianza por faceta
-seaborn,sns_residuos_lowess.png,Suavizado local sobre los residuos de M1 y M3
-seaborn,sns_jointplot.png,Distribución conjunta con marginales por sector
-Plotly,scatter_interactivo.html,"Dispersión con tendencia, hover por cliente y leyenda filtrable"
-Plotly,superficie_3d.html,"Plano de regresión con dos predictores continuos, rotable"
-Plotly,dashboard_regresion.html,Tablero de cuatro paneles con filtro por sector
