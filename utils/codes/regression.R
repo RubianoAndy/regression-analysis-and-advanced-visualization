@@ -27,7 +27,7 @@ script_path <- function() {
   if (length(file_arg) > 0) {
     return(normalizePath(sub("^--file=", "", file_arg[1]), mustWork = FALSE))
   }
-  for (i in seq_len(sys.nframes())) {
+  for (i in seq_len(sys.nframe())) {
     ofile <- sys.frame(i)$ofile
     if (!is.null(ofile)) {
       return(normalizePath(ofile, mustWork = FALSE))
