@@ -4,7 +4,7 @@ Regenera con la semilla fija 42 el mismo conjunto de 120 clientes que vienen
 usando las actividades anteriores, de modo que todo el esfuerzo de esta
 actividad se concentre en modelar los datos y no en describirlos.
 
-Rutas: el script se ubica en codes -> utils -> raíz del proyecto y escribe el
+Rutas: el script se ubica en python -> codes -> utils -> raíz del proyecto y escribe el
 CSV en ``data/dataset``.
 """
 
@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = PROJECT_ROOT / "data" / "dataset"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 

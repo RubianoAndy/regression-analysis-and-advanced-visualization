@@ -47,8 +47,9 @@ this_file <- script_path()
 project_root <- if (is.null(this_file)) {
   normalizePath(getwd(), mustWork = FALSE)
 } else {
-  # utils/codes/regression.R -> utils/codes -> utils -> raiz del proyecto
-  dirname(dirname(dirname(this_file)))
+  # utils/codes/R/regression.R -> utils/codes/R -> utils/codes ->
+  # utils -> raiz del proyecto
+  dirname(dirname(dirname(dirname(this_file))))
 }
 
 data_path <- file.path(project_root, "data", "dataset", "consumo_energia.csv")

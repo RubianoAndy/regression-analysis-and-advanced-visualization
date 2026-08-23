@@ -9,7 +9,7 @@ pliegues.
 La comparación decide algo concreto: si añadir el sector, que mejoró el ajuste
 dentro de la muestra, también mejora la predicción fuera de ella.
 
-Rutas: el script se ubica en codes -> utils -> raíz del proyecto.
+Rutas: el script se ubica en python -> codes -> utils -> raíz del proyecto.
 Lee el CSV de ``data/dataset``, escribe las tablas en ``data/processed`` y
 las imágenes en ``public/assets/images/figures/python/regression/``.
 """
@@ -29,7 +29,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (OneHotEncoder, PolynomialFeatures,
                                    StandardScaler)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = PROJECT_ROOT / "data" / "dataset"
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 FIGURES_DIR = (

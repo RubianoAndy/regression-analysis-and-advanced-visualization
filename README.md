@@ -82,12 +82,14 @@ El análisis sigue una sola línea argumental:
 │                   └── regression/       # 3 figuras en ggplot2 + 1 diagnóstico base
 └── utils/
     └── codes/
-        ├── dataset.py                    # Fase 0 · generación del dataset
-        ├── simple_regression.py          # Fase 1 · correlación, M1 y diagnóstico
-        ├── multiple_regression.py        # Fase 2 · M2, M3 y comparación
-        ├── ml_regression.py              # Fase 3 · validación con scikit-learn
-        ├── advanced_viz.py               # Fase 4 · seaborn y tablero de Plotly
-        └── regression.R                  # Fase 5 · verificación cruzada y ggplot2
+        ├── python/                       # Fases 0 a 4
+        │   ├── dataset.py                # Fase 0 · generación del dataset
+        │   ├── simple_regression.py      # Fase 1 · correlación, M1 y diagnóstico
+        │   ├── multiple_regression.py    # Fase 2 · M2, M3 y comparación
+        │   ├── ml_regression.py          # Fase 3 · validación con scikit-learn
+        │   └── advanced_viz.py           # Fase 4 · seaborn y tablero de Plotly
+        └── R/                            # Fase 5
+            └── regression.R              # Fase 5 · verificación cruzada y ggplot2
 ```
 
 ---
@@ -98,12 +100,12 @@ El flujo es **secuencial**: la Fase 0 genera el dataset que consumen las demás,
 
 | Fase | Script | Qué produce |
 |---|---|---|
-| 0 | [`dataset.py`](utils/codes/dataset.py) | Dataset reproducible de 120 clientes |
-| 1 | [`simple_regression.py`](utils/codes/simple_regression.py) | Correlaciones, modelo M1, pruebas de supuestos y 3 figuras |
-| 2 | [`multiple_regression.py`](utils/codes/multiple_regression.py) | Modelos M2 y M3, ANOVA, tarifas y 3 figuras |
-| 3 | [`ml_regression.py`](utils/codes/ml_regression.py) | Partición estratificada, validación cruzada y 1 figura |
-| 4 | [`advanced_viz.py`](utils/codes/advanced_viz.py) | 4 figuras de seaborn y 2 piezas interactivas de Plotly |
-| 5 | [`regression.R`](utils/codes/regression.R) | Recálculo con `lm()`, verificación cruzada y 4 figuras |
+| 0 | [`dataset.py`](utils/codes/python/dataset.py) | Dataset reproducible de 120 clientes |
+| 1 | [`simple_regression.py`](utils/codes/python/simple_regression.py) | Correlaciones, modelo M1, pruebas de supuestos y 3 figuras |
+| 2 | [`multiple_regression.py`](utils/codes/python/multiple_regression.py) | Modelos M2 y M3, ANOVA, tarifas y 3 figuras |
+| 3 | [`ml_regression.py`](utils/codes/python/ml_regression.py) | Partición estratificada, validación cruzada y 1 figura |
+| 4 | [`advanced_viz.py`](utils/codes/python/advanced_viz.py) | 4 figuras de seaborn y 2 piezas interactivas de Plotly |
+| 5 | [`regression.R`](utils/codes/R/regression.R) | Recálculo con `lm()`, verificación cruzada y 4 figuras |
 
 **Características clave:**
 
@@ -151,14 +153,14 @@ source venv/Scripts/activate    # Git Bash (en PowerShell: venv\Scripts\activate
 pip install -r requirements.txt
 
 # 2. Fases 0 a 4
-python utils/codes/dataset.py
-python utils/codes/simple_regression.py
-python utils/codes/multiple_regression.py
-python utils/codes/ml_regression.py
-python utils/codes/advanced_viz.py
+python utils/codes/python/dataset.py
+python utils/codes/python/simple_regression.py
+python utils/codes/python/multiple_regression.py
+python utils/codes/python/ml_regression.py
+python utils/codes/python/advanced_viz.py
 
 # 3. Fase 5: verificación cruzada en R
-Rscript utils/codes/regression.R
+Rscript utils/codes/R/regression.R
 ```
 
 Si `Rscript` no está en el `PATH` de Git Bash, añádelo a la sesión antes del último paso:

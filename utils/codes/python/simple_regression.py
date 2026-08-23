@@ -10,7 +10,7 @@ El interés del ajuste no está solo en su bondad global, sino en lo que dejan
 ver sus residuos: al colorearlos por sector aparece un patrón sistemático que
 la especificación simple no puede capturar y que motiva la Fase 2.
 
-Rutas: el script se ubica en codes -> utils -> raíz del proyecto.
+Rutas: el script se ubica en python -> codes -> utils -> raíz del proyecto.
 Lee el CSV de ``data/dataset``, escribe las tablas en ``data/processed`` y
 las imágenes en ``public/assets/images/figures/python/regression/``.
 """
@@ -26,7 +26,7 @@ from scipy import stats
 from statsmodels.stats.diagnostic import het_breuschpagan
 from statsmodels.stats.stattools import durbin_watson, jarque_bera
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = PROJECT_ROOT / "data" / "dataset"
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 FIGURES_DIR = (
@@ -52,7 +52,7 @@ dataset_path = DATA_DIR / "consumo_energia.csv"
 if not dataset_path.exists():
     raise SystemExit(
         f"No se encontró {dataset_path}. Ejecuta antes la Fase 0: "
-        "python utils/codes/dataset.py"
+        "python utils/codes/python/dataset.py"
     )
 df = pd.read_csv(dataset_path)
 df["sector"] = pd.Categorical(df["sector"], categories=SECTOR_ORDER, ordered=True)

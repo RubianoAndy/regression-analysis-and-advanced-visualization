@@ -12,7 +12,7 @@ La comparación no se hace solo por R2: se añaden los criterios de información
 de Akaike y Schwarz, el error de predicción en unidades originales y las
 pruebas de supuestos, porque un R2 siempre crece al agregar regresores.
 
-Rutas: el script se ubica en codes -> utils -> raíz del proyecto.
+Rutas: el script se ubica en python -> codes -> utils -> raíz del proyecto.
 Lee el CSV de ``data/dataset``, escribe las tablas en ``data/processed`` y
 las imágenes en ``public/assets/images/figures/python/regression/``.
 """
@@ -27,7 +27,7 @@ from statsmodels.stats.anova import anova_lm
 from statsmodels.stats.diagnostic import het_breuschpagan
 from statsmodels.stats.stattools import durbin_watson, jarque_bera
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = PROJECT_ROOT / "data" / "dataset"
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 FIGURES_DIR = (

@@ -13,7 +13,7 @@ Se separa en dos bloques con propósitos distintos:
 Ambos bloques leen las tablas que escribieron las Fases 2 y 3, de modo que las
 cifras mostradas son exactamente las estimadas allí y no un recálculo paralelo.
 
-Rutas: el script se ubica en codes -> utils -> raíz del proyecto.
+Rutas: el script se ubica en python -> codes -> utils -> raíz del proyecto.
 Escribe las figuras estáticas en
 ``public/assets/images/figures/python/advanced/`` y las interactivas en
 ``public/assets/images/figures/python/dashboard/``.
@@ -30,7 +30,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = PROJECT_ROOT / "data" / "dataset"
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 FIGURES_BASE = PROJECT_ROOT / "public" / "assets" / "images" / "figures" / "python"
