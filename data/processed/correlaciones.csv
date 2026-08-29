@@ -1,5 +1,5 @@
-grupo,n,pearson_r,pearson_p,r_cuadrado,spearman_rho,spearman_p,tarifa_media_cop_kwh
-Global,120,0.9984,1.68e-149,0.9969,0.9947,3.26e-118,758.1
-Residencial,62,0.982,4.08e-45,0.9643,0.9671,2.22e-37,821.8
-Comercial,40,0.9866,1.61e-31,0.9733,0.9799,3.19e-28,710.4
-Industrial,18,0.9937,1.18e-16,0.9875,0.9856,9.12e-14,645.0
+variable,pearson_r,p_valor,relacion
+area_m2,0.7774,1.35e-31,positiva
+estrato,0.4872,2.57e-10,positiva
+antiguedad_anios,-0.1946,1.70e-02,negativa
+habitaciones,0.0807,3.26e-01,positiva

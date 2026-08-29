@@ -1,265 +1,172 @@
-#' Actividad 4 - Fase 5: verificacion cruzada de la regresion en R.
+#' Fase 5 - Los mismos modelos en R con lm() y ggplot2.
 #'
-#' Reestima con lm() los mismos tres modelos que la Fase 2 ajusto con
-#' statsmodels, contrasta los modelos anidados con anova() y compara
-#' coeficiente a coeficiente contra las tablas que escribio Python. Las
-#' figuras se reparten a proposito entre los dos sistemas graficos de R:
-#' ggplot2 para las vistas del ajuste y la graficacion base para el
-#' diagnostico canonico plot(modelo).
+#' Reestima con lm() la regresion simple y la multiple de la Fase 2 y compara
+#' los coeficientes contra los que estimo statsmodels. Que dos implementaciones
+#' independientes lleguen al mismo numero es la mejor prueba de que el
+#' resultado no depende de la herramienta.
 #'
-#' Las rutas se resuelven desde la ubicacion de este archivo, no desde el
-#' directorio de trabajo, de modo que las salidas caen siempre dentro de este
-#' proyecto aunque la sesion de RStudio apunte a otro. Escribe las tablas en
-#' data/processed y las imagenes en public/assets/images/figures/r/regression/.
+#' Produce ademas las tres figuras en ggplot2 del informe.
+#'
+#' Ejecutar desde la raiz del proyecto:
+#'   Rscript utils/codes/R/regression.R
+#' o abrirlo en RStudio y pulsar Source.
 
 library(ggplot2)
 
-#' 0. RESOLUCION DE RUTAS.
-#'
-#' R no expone un equivalente de __file__: con rutas relativas manda getwd(),
-#' asi que una sesion abierta sobre otro proyecto escribe alli las figuras.
-#' script_path() recupera la ruta real del archivo en los tres modos de
-#' ejecucion: Rscript (argumento --file=), source() (variable ofile del marco
-#' que hace la llamada) y el boton Source/Run de RStudio (rstudioapi).
-script_path <- function() {
-  args <- commandArgs(trailingOnly = FALSE)
-  file_arg <- grep("^--file=", args, value = TRUE)
-  if (length(file_arg) > 0) {
-    return(normalizePath(sub("^--file=", "", file_arg[1]), mustWork = FALSE))
-  }
-  for (i in seq_len(sys.nframe())) {
-    ofile <- sys.frame(i)$ofile
-    if (!is.null(ofile)) {
-      return(normalizePath(ofile, mustWork = FALSE))
-    }
-  }
-  if (requireNamespace("rstudioapi", quietly = TRUE) &&
-      rstudioapi::isAvailable()) {
-    contexto <- rstudioapi::getSourceEditorContext()
-    if (!is.null(contexto) && nzchar(contexto$path)) {
-      return(normalizePath(contexto$path, mustWork = FALSE))
-    }
-  }
-  NULL
+# ---------------------------------------------------------------------------
+# 0. Rutas
+# ---------------------------------------------------------------------------
+# R no tiene un equivalente de __file__, asi que la ruta del script se busca en
+# los dos modos de ejecucion posibles: Rscript (argumento --file=) y el boton
+# Source de RStudio. Si ninguno funciona se usa el directorio de trabajo.
+argumentos <- commandArgs(trailingOnly = FALSE)
+archivo <- sub("^--file=", "", grep("^--file=", argumentos, value = TRUE))
+if (length(archivo) == 0 && requireNamespace("rstudioapi", quietly = TRUE) &&
+    rstudioapi::isAvailable()) {
+  archivo <- rstudioapi::getSourceEditorContext()$path
 }
-
-this_file <- script_path()
-project_root <- if (is.null(this_file)) {
-  normalizePath(getwd(), mustWork = FALSE)
+raiz <- if (length(archivo) > 0 && nzchar(archivo)) {
+  # utils/codes/R/regression.R -> utils/codes/R -> utils/codes -> utils -> raiz
+  dirname(dirname(dirname(dirname(normalizePath(archivo)))))
 } else {
-  # utils/codes/R/regression.R -> utils/codes/R -> utils/codes ->
-  # utils -> raiz del proyecto
-  dirname(dirname(dirname(dirname(this_file))))
+  getwd()
 }
 
-data_path <- file.path(project_root, "data", "dataset", "consumo_energia.csv")
-processed_dir <- file.path(project_root, "data", "processed")
-figures_dir <- file.path(project_root, "public", "assets", "images", "figures",
-                         "r", "regression")
+dataset <- file.path(raiz, "data", "dataset", "viviendas.csv")
+tablas <- file.path(raiz, "data", "processed")
+figuras <- file.path(raiz, "public", "assets", "images", "figures", "r")
 
-#' Verificar el dataset antes de crear nada: si la raiz deducida fuera la
-#' equivocada, el script se detiene en vez de sembrar carpetas y figuras en
-#' otro proyecto.
-if (!file.exists(data_path)) {
-  stop(sprintf(paste0("No se encontro el dataset en '%s'. Ejecuta el script ",
-                      "desde este proyecto (Fase 1: dataset.py) antes de la ",
-                      "verificacion cruzada."),
-               data_path))
+if (!file.exists(dataset)) {
+  stop(sprintf("No se encontro %s. Ejecuta antes dataset.py.", dataset))
 }
+if (!dir.exists(figuras)) dir.create(figuras, recursive = TRUE)
 
-for (d in c(processed_dir, figures_dir)) {
-  if (!dir.exists(d)) {
-    dir.create(d, recursive = TRUE)
-  }
-}
+cat(sprintf("Raiz del proyecto: %s\n\n", raiz))
 
-cat(sprintf("Raiz del proyecto: %s\n", project_root))
+df <- read.csv(dataset)
+azules <- c("3" = "#a6bddb", "4" = "#4292c6", "5" = "#08519c")
+naranja <- "#d95f02"
 
-sector_order <- c("Residencial", "Comercial", "Industrial")
-sector_colors <- c(Residencial = "#a6bddb", Comercial = "#74a9cf",
-                   Industrial = "#2b8cbe")
-accent <- "#d95f02"
+tema <- theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold", size = 13),
+        plot.subtitle = element_text(colour = "grey35"),
+        legend.position = "bottom")
 
-df <- read.csv(data_path)
-df$sector <- factor(df$sector, levels = sector_order)
-df$tarifa_cop_kwh <- df$costo_miles_cop * 1000 / df$consumo_kwh
-n <- nrow(df)
+# ---------------------------------------------------------------------------
+# 1. Regresion lineal simple: precio ~ area
+# ---------------------------------------------------------------------------
+simple <- lm(precio_millones_cop ~ area_m2, data = df)
+cat("=== Modelo simple ===\n")
+print(summary(simple))
 
-#' 1. ESTIMACION DE LOS TRES MODELOS.
-#'
-#' El operador * de la formula de R expande igual que el de patsy: efectos
-#' principales mas interaccion. Residencial es el nivel de referencia por ser
-#' el primero del factor, de modo que los coeficientes coinciden uno a uno con
-#' los de Python.
-m1 <- lm(costo_miles_cop ~ consumo_kwh, data = df)
-m2 <- lm(costo_miles_cop ~ consumo_kwh + sector, data = df)
-m3 <- lm(costo_miles_cop ~ consumo_kwh * sector, data = df)
+# ---------------------------------------------------------------------------
+# 2. Regresion lineal multiple
+# ---------------------------------------------------------------------------
+multiple <- lm(precio_millones_cop ~ area_m2 + habitaciones +
+                 antiguedad_anios + estrato, data = df)
+cat("\n=== Modelo multiple ===\n")
+print(summary(multiple))
 
-cat("=== M1 - regresion lineal simple ===\n")
-print(summary(m1))
-cat("\n=== M3 - regresion multiple con interaccion ===\n")
-print(summary(m3))
+# El contraste F entre los dos modelos responde si las tres variables anadidas
+# aportan lo suficiente para justificar los grados de libertad que gastan.
+cat("\n=== Contraste F: el modelo multiple frente al simple ===\n")
+print(anova(simple, multiple))
 
-#' 2. CONTRASTE DE MODELOS ANIDADOS Y METRICAS COMPARABLES.
-cat("\n=== Contraste F entre modelos anidados ===\n")
-print(anova(m1, m2, m3))
-
-rmse <- function(observado, predicho) sqrt(mean((observado - predicho)^2))
-
-metricas <- data.frame(
-  modelo = c("M1 - Simple", "M2 - Aditivo", "M3 - Interaccion"),
-  r2 = round(c(summary(m1)$r.squared, summary(m2)$r.squared,
-               summary(m3)$r.squared), 4),
-  r2_ajustado = round(c(summary(m1)$adj.r.squared, summary(m2)$adj.r.squared,
-                        summary(m3)$adj.r.squared), 4),
-  aic = round(c(AIC(m1), AIC(m2), AIC(m3)), 1),
-  rmse = round(c(rmse(df$costo_miles_cop, fitted(m1)),
-                 rmse(df$costo_miles_cop, fitted(m2)),
-                 rmse(df$costo_miles_cop, fitted(m3))), 2)
+# ---------------------------------------------------------------------------
+# 3. Coeficientes y comparacion con Python
+# ---------------------------------------------------------------------------
+resumen <- summary(multiple)$coefficients
+intervalos <- confint(multiple)
+coeficientes_r <- data.frame(
+  termino = rownames(resumen),
+  coeficiente = round(resumen[, "Estimate"], 3),
+  error_estandar = round(resumen[, "Std. Error"], 3),
+  estadistico_t = round(resumen[, "t value"], 2),
+  p_valor = format(resumen[, "Pr(>|t|)"], digits = 3, scientific = TRUE),
+  ic95_inferior = round(intervalos[, 1], 3),
+  ic95_superior = round(intervalos[, 2], 3),
+  row.names = NULL
 )
-cat("\n=== Metricas de los tres modelos (R) ===\n")
-print(metricas, row.names = FALSE)
-cat("Nota: el AIC de R supera en 2,0 al de statsmodels porque R cuenta la\n",
-    "varianza residual como un parametro mas. La diferencia es constante y\n",
-    "no altera el orden de los modelos.\n")
-write.csv(metricas, file.path(processed_dir, "comparacion_modelos_r.csv"),
+write.csv(coeficientes_r, file.path(tablas, "regresion_multiple_r.csv"),
           row.names = FALSE)
+cat("\nCoeficientes estimados con lm()\n")
+print(coeficientes_r, row.names = FALSE)
 
-#' 3. COEFICIENTES Y VERIFICACION CRUZADA CONTRA PYTHON.
-#'
-#' Se comparan los seis coeficientes de M3 con los que dejo statsmodels en
-#' regresion_multiple.csv. La coincidencia debe darse en todas las cifras
-#' reportadas: ambos resuelven el mismo sistema de ecuaciones normales.
-coef_m3 <- data.frame(
-  termino = names(coef(m3)),
-  coeficiente = round(unname(coef(m3)), 4),
-  error_std = round(unname(summary(m3)$coefficients[, 2]), 4),
-  estadistico_t = round(unname(summary(m3)$coefficients[, 3]), 2),
-  p_valor = formatC(unname(summary(m3)$coefficients[, 4]), format = "e",
-                    digits = 2),
-  ic95_inferior = round(unname(confint(m3)[, 1]), 4),
-  ic95_superior = round(unname(confint(m3)[, 2]), 4)
-)
-cat("\n=== Coeficientes de M3 en R ===\n")
-print(coef_m3, row.names = FALSE)
-write.csv(coef_m3, file.path(processed_dir, "regresion_multiple_r.csv"),
-          row.names = FALSE)
-
-#' R y patsy ordenan la matriz de diseno de forma distinta —R agrupa primero
-#' las variables continuas y patsy primero las categoricas—, asi que la
-#' comparacion se hace emparejando por nombre de termino y no por posicion.
-orden_python <- c("(Intercept)", "sectorComercial", "sectorIndustrial",
-                  "consumo_kwh", "consumo_kwh:sectorComercial",
-                  "consumo_kwh:sectorIndustrial")
-python_path <- file.path(processed_dir, "regresion_multiple.csv")
-if (file.exists(python_path)) {
-  coef_python <- read.csv(python_path)
-  coef_r_ordenado <- coef(m3)[orden_python]
-  comparacion <- data.frame(
-    termino = coef_python$termino,
-    termino_r = orden_python,
-    python = coef_python$coeficiente,
-    r = round(unname(coef_r_ordenado), 4),
-    diferencia_absoluta = abs(coef_python$coeficiente -
-                                round(unname(coef_r_ordenado), 4))
+# Verificacion: la diferencia con statsmodels deberia ser cero hasta el
+# redondeo. Si alguna vez no lo fuera, es que los dos modelos no son el mismo.
+ruta_python <- file.path(tablas, "regresion_multiple.csv")
+if (file.exists(ruta_python)) {
+  coeficientes_py <- read.csv(ruta_python)
+  verificacion <- data.frame(
+    termino = coeficientes_r$termino,
+    python_statsmodels = coeficientes_py$coeficiente,
+    r_lm = coeficientes_r$coeficiente,
+    diferencia = round(coeficientes_py$coeficiente - coeficientes_r$coeficiente, 6)
   )
-  cat("\n=== Verificacion cruzada Python vs R (coeficientes de M3) ===\n")
-  print(comparacion, row.names = FALSE)
-  cat(sprintf("Diferencia maxima: %.10f\n",
-              max(comparacion$diferencia_absoluta)))
-  write.csv(comparacion, file.path(processed_dir, "verificacion_cruzada.csv"),
+  write.csv(verificacion, file.path(tablas, "verificacion_python_r.csv"),
             row.names = FALSE)
-} else {
-  cat("\nNo se encontro regresion_multiple.csv: ejecuta antes la Fase 2.\n")
+  cat("\nVerificacion cruzada Python vs R\n")
+  print(verificacion, row.names = FALSE)
+  cat(sprintf("\nDiferencia maxima entre las dos implementaciones: %.6f\n",
+              max(abs(verificacion$diferencia))))
 }
 
-#' Pendiente por sector, que es la tarifa implicita de cada grupo.
-pendientes <- c(
-  Residencial = unname(coef(m3)["consumo_kwh"]),
-  Comercial = unname(coef(m3)["consumo_kwh"] +
-                       coef(m3)["consumo_kwh:sectorComercial"]),
-  Industrial = unname(coef(m3)["consumo_kwh"] +
-                        coef(m3)["consumo_kwh:sectorIndustrial"])
-)
-cat("\n=== Tarifa implicita por sector (COP/kWh) ===\n")
-print(round(pendientes * 1000, 1))
+r2_simple <- summary(simple)$r.squared
+r2_multiple <- summary(multiple)$r.squared
+cat(sprintf("\nR2 simple = %.4f | R2 multiple = %.4f | ganancia = %.1f p.p.\n",
+            r2_simple, r2_multiple, (r2_multiple - r2_simple) * 100))
 
-#' 4. FIGURAS CON GGPLOT2.
-#'
-#' La gramatica de graficos declara el ajuste como una capa mas: geom_smooth
-#' con method = "lm" reestima la regresion dentro de cada grupo y dibuja su
-#' banda de confianza sin necesidad de calcularla aparte.
+# ---------------------------------------------------------------------------
+# 4. Figuras con ggplot2
+# ---------------------------------------------------------------------------
+df$estrato_f <- factor(df$estrato)
+df$precio_estimado <- round(fitted(multiple), 1)
 
-tema_informe <- theme_minimal(base_size = 11) +
-  theme(plot.title = element_text(face = "bold"),
-        panel.grid.minor = element_blank(),
-        legend.position = "top")
+# Figura 1: el ajuste simple con su banda de confianza. geom_smooth ajusta el
+# mismo lm() por dentro, asi que la recta dibujada es exactamente la estimada.
+g1 <- ggplot(df, aes(area_m2, precio_millones_cop)) +
+  geom_point(colour = "#2b8cbe", alpha = 0.8, size = 2) +
+  geom_smooth(method = "lm", formula = y ~ x, colour = naranja,
+              fill = naranja, alpha = 0.2) +
+  labs(title = "Regresion simple en R: precio frente a area",
+       subtitle = sprintf("lm(precio ~ area) - R2 = %.4f - pendiente = %.2f millones por m2",
+                          r2_simple, coef(simple)[2]),
+       x = "Area (m2)", y = "Precio (millones de COP)") +
+  tema
+ggsave(file.path(figuras, "ggplot_ajuste_simple.png"), g1,
+       width = 7.5, height = 4.5, dpi = 150)
 
-#' Ajuste global frente a ajuste por sector, en un mismo lienzo.
-g1 <- ggplot(df, aes(x = consumo_kwh, y = costo_miles_cop)) +
-  geom_point(aes(color = sector), size = 2, alpha = 0.9) +
-  geom_smooth(method = "lm", formula = y ~ x, color = accent,
-              linewidth = 0.9, se = TRUE) +
-  scale_color_manual(values = sector_colors, name = "Sector") +
-  labs(title = "Regresión lineal simple del costo sobre el consumo (R)",
-       subtitle = sprintf("R2 = %.4f, pendiente = %.1f COP/kWh",
-                          summary(m1)$r.squared,
-                          coef(m1)["consumo_kwh"] * 1000),
-       x = "Consumo (kWh/mes)", y = "Costo facturado (miles de COP)") +
-  tema_informe
-ggsave(file.path(figures_dir, "ggplot_ajuste_simple.png"), g1,
-       width = 7.2, height = 4.2, dpi = 150, type = "cairo")
+# Figura 2: un panel por estrato. Las tres rectas tienen pendiente parecida y
+# alturas distintas, que es justo lo que el modelo multiple supone.
+g2 <- ggplot(df, aes(area_m2, precio_millones_cop, colour = estrato_f)) +
+  geom_point(alpha = 0.85, size = 2) +
+  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, alpha = 0.15,
+              aes(fill = estrato_f)) +
+  facet_wrap(~ estrato_f, labeller = labeller(estrato_f = function(x) paste("Estrato", x))) +
+  scale_colour_manual(values = azules, name = "Estrato") +
+  scale_fill_manual(values = azules, name = "Estrato") +
+  labs(title = "Una regresion por estrato",
+       subtitle = "Misma pendiente, distinta altura: el estrato desplaza el precio hacia arriba",
+       x = "Area (m2)", y = "Precio (millones de COP)") +
+  tema
+ggsave(file.path(figuras, "ggplot_facetas_estrato.png"), g2,
+       width = 9.5, height = 4.2, dpi = 150)
 
-#' Una faceta por sector con escalas libres: la relacion dentro de cada grupo
-#' sin que la escala del sector Industrial aplaste a los demas.
-etiquetas_tarifa <- setNames(
-  sprintf("%s - %.0f COP/kWh", sector_order, pendientes[sector_order] * 1000),
-  sector_order)
-g2 <- ggplot(df, aes(x = consumo_kwh, y = costo_miles_cop, color = sector)) +
-  geom_point(size = 2, alpha = 0.9) +
-  geom_smooth(method = "lm", formula = y ~ x, se = TRUE, color = accent,
+# Figura 3: precio real frente al estimado. La diagonal es la prediccion
+# perfecta; cuanto mas pegados a ella esten los puntos, mejor el modelo.
+g3 <- ggplot(df, aes(precio_estimado, precio_millones_cop, colour = estrato_f)) +
+  geom_abline(slope = 1, intercept = 0, colour = naranja, linetype = "dashed",
               linewidth = 0.9) +
-  facet_wrap(~ sector, scales = "free",
-             labeller = labeller(sector = etiquetas_tarifa)) +
-  scale_color_manual(values = sector_colors, guide = "none") +
-  labs(title = "Una regresión por sector: cada pendiente es una tarifa (R)",
-       x = "Consumo (kWh/mes)", y = "Costo facturado (miles de COP)") +
-  tema_informe
-ggsave(file.path(figures_dir, "ggplot_ajuste_por_sector.png"), g2,
-       width = 9.6, height = 3.8, dpi = 150, type = "cairo")
+  geom_point(alpha = 0.85, size = 2) +
+  scale_colour_manual(values = azules, name = "Estrato") +
+  coord_equal() +
+  labs(title = "Modelo multiple: precio real frente al estimado",
+       subtitle = sprintf("lm con cuatro variables - R2 = %.4f - error tipico = %.1f millones",
+                          r2_multiple, summary(multiple)$sigma),
+       x = "Precio estimado (millones de COP)",
+       y = "Precio real (millones de COP)") +
+  tema
+ggsave(file.path(figuras, "ggplot_real_vs_estimado.png"), g3,
+       width = 6.5, height = 5.5, dpi = 150)
 
-#' Residuos de M1 y M3 enfrentados: la misma comparacion que en Python, para
-#' comprobar que el sesgo por sector no es un artefacto de una libreria.
-residuos <- rbind(
-  data.frame(modelo = "M1 · simple", sector = df$sector,
-             ajustado = fitted(m1), residuo = residuals(m1)),
-  data.frame(modelo = "M3 · con interacción", sector = df$sector,
-             ajustado = fitted(m3), residuo = residuals(m3))
-)
-g3 <- ggplot(residuos, aes(x = sector, y = residuo, fill = sector)) +
-  geom_hline(yintercept = 0, color = accent, linewidth = 0.7) +
-  geom_boxplot(alpha = 0.95, outlier.size = 1.2) +
-  stat_summary(fun = mean, geom = "point", shape = 18, size = 3,
-               color = accent) +
-  facet_wrap(~ modelo) +
-  scale_fill_manual(values = sector_colors, guide = "none") +
-  labs(title = "El sesgo por sector desaparece al incluir la interacción (R)",
-       subtitle = "El rombo marca el residuo medio de cada sector",
-       x = "Sector", y = "Residuo (miles de COP)") +
-  tema_informe
-ggsave(file.path(figures_dir, "ggplot_residuos_por_sector.png"), g3,
-       width = 9.0, height = 4.0, dpi = 150, type = "cairo")
-
-#' 5. DIAGNOSTICO CANONICO CON LA GRAFICACION BASE.
-#'
-#' plot(modelo) devuelve las cuatro vistas clasicas del diagnostico de un lm
-#' —residuos frente a ajustados, Q-Q normal, escala-localizacion y residuos
-#' frente a apalancamiento con las curvas de Cook—, etiquetando ademas las
-#' observaciones mas influyentes.
-png(file.path(figures_dir, "base_diagnostico_m1.png"),
-    width = 2100, height = 1500, res = 200, type = "cairo")
-par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
-plot(m1, col = "#2c7fb8", pch = 19, cex = 0.6)
-dev.off()
-
-cat("\nOK - Fase 5: verificacion cruzada en R y figuras generadas\n")
+cat("\nOK - Fase 5: 2 tablas en data/processed y 3 figuras en figures/r\n")

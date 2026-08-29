@@ -1,7 +1,6 @@
-"termino","coeficiente","error_std","estadistico_t","p_valor","ic95_inferior","ic95_superior"
-"(Intercept)",7.1067,13.6264,0.52,"6.03e-01",-19.8872,34.1005
-"consumo_kwh",0.7916,0.0533,14.85,"2.05e-28",0.686,0.8972
-"sectorComercial",-2.6594,22.3549,-0.12,"9.06e-01",-46.9442,41.6255
-"sectorIndustrial",-71.9656,28.1145,-2.56,"1.18e-02",-127.6602,-16.271
-"consumo_kwh:sectorComercial",-0.0868,0.0568,-1.53,"1.29e-01",-0.1994,0.0257
-"consumo_kwh:sectorIndustrial",-0.1206,0.0541,-2.23,"2.77e-02",-0.2277,-0.0135
+"termino","coeficiente","error_estandar","estadistico_t","p_valor","ic95_inferior","ic95_superior"
+"(Intercept)",-237.026,24.137,-9.82,"9.15e-18",-284.731,-189.321
+"area_m2",3.797,0.133,28.51,"2.54e-61",3.534,4.06
+"habitaciones",16.01,3.482,4.6,"9.20e-06",9.128,22.892
+"antiguedad_anios",-2.475,0.359,-6.9,"1.52e-10",-3.184,-1.766
+"estrato",85.185,4.44,19.18,"1.27e-41",76.409,93.961

@@ -1,4 +1,0 @@
-sector,pendiente_estimada_miles_cop_kwh,tarifa_implicita_cop_kwh,tarifa_media_observada_cop_kwh,diferencia_pct
-Residencial,0.7916,791.6,821.8,-3.67
-Comercial,0.7048,704.8,710.4,-0.79
-Industrial,0.671,671.0,645.0,4.03

@@ -1,3 +1,0 @@
-modelo,r2_entrenamiento,r2_prueba,rmse_prueba,mae_prueba,mape_prueba_pct,r2_cv_media,rmse_cv_media,rmse_cv_desv
-MCO simple (solo consumo),0.9978,0.9934,39.27,25.04,5.12,0.9942,30.61,10.01
-MCO múltiple (consumo × sector),0.9989,0.9944,36.26,18.83,3.68,0.996,25.49,10.53

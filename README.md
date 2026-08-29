@@ -17,7 +17,7 @@
 | **Asignatura** | Ciencia de Datos — Actividad 4 |
 | **Programa** | Maestría en Inteligencia Artificial |
 | **Universidad** | Universidad de La Salle |
-| **Herramientas** | Python 3.14 (statsmodels · scikit-learn · seaborn · Plotly) y R 4.6 (`lm` · ggplot2) |
+| **Herramientas** | Python 3.14 (statsmodels · scikit-learn · Matplotlib · seaborn · Plotly) y R 4.6 (`lm` · ggplot2) |
 | **Año** | 2026 |
 | **Estado** | Completado |
 
@@ -25,23 +25,25 @@
 
 ## 🎯 Descripción del Proyecto
 
-Laboratorio de **análisis de regresión y visualización avanzada** sobre el consumo energético mensual de **120 clientes** de una empresa distribuidora, repartidos en los sectores Residencial, Comercial e Industrial.
+Análisis de regresión sobre el **precio de 150 apartamentos usados en Bogotá**, descritos por cuatro características que cualquier avalúo mira primero: **área, número de habitaciones, antigüedad y estrato**.
 
-El análisis sigue una sola línea argumental:
+La pregunta es una sola y se responde en cuatro pasos:
 
-1. **Una recta que ajusta casi perfecto y aun así está mal.** La regresión simple `costo ~ consumo` alcanza un R² de **0,9969**, pero sus residuos no son ruido: se ordenan por sector y las pruebas de Breusch-Pagan y Jarque-Bera rechazan homocedasticidad y normalidad.
-2. **El diagnóstico se convierte en especificación.** Al entrar el sector y su interacción con el consumo, cada grupo obtiene su propia pendiente, que resulta ser **su tarifa en COP/kWh**, verificable contra el cociente `costo/consumo` sin pasar por la regresión.
-3. **La mejora se confirma fuera de la muestra.** `scikit-learn` valida ambas especificaciones con partición estratificada y validación cruzada de 10 pliegues: el modelo múltiple reduce el error de predicción un **16,7 %** frente al simple.
-4. **Todo se verifica en R.** `lm()` reproduce los seis coeficientes del modelo múltiple con **diferencia máxima de 0,0000**.
+> **¿Qué determina el precio de un apartamento y con cuánta precisión se puede estimar?**
+
+1. **La correlación sugiere una respuesta incompleta.** El área es la variable más asociada al precio (r = 0,78), mientras que el número de habitaciones parece irrelevante (r = 0,08, p = 0,33).
+2. **La regresión simple confirma que el área importa, pero no basta.** `precio ~ área` explica el **60,4 %** de la variabilidad y se equivoca en promedio 66,7 millones por apartamento.
+3. **La regresión múltiple cambia el diagnóstico.** Al incluir las cuatro variables el R² sube a **0,896** y las habitaciones resultan **altamente significativas** (+16,0 millones cada una): lo que la correlación simple no veía, el modelo múltiple sí lo aísla.
+4. **La mejora se sostiene fuera de la muestra.** Sobre 45 apartamentos que el modelo nunca vio, el R² es **0,8955** y el error medio, **34,8 millones (8,1 % del precio)**. `lm()` en R reproduce los cinco coeficientes con diferencia **0,000000**.
 
 ### Objetivos Principales
 
-- Cuantificar la asociación entre consumo y costo y ajustar la regresión lineal simple con `statsmodels`.
-- Diagnosticar los supuestos del modelo y traducir sus fallas en una especificación múltiple mejor.
-- Comparar los modelos con criterios que no se dejan engañar por el R² (R² ajustado, AIC, BIC y RMSE).
-- Validar la capacidad predictiva con `scikit-learn`.
-- Comunicar los resultados con seaborn, Plotly y un tablero interactivo.
-- Confirmar cada cifra con una implementación independiente en R (`lm`, `anova` y ggplot2).
+- Medir la asociación de cada característica con el precio y ajustar la regresión lineal simple con `statsmodels`.
+- Estimar la regresión múltiple e interpretar cada coeficiente **manteniendo constantes las demás variables**.
+- Comparar ambos modelos con R², R² ajustado y error medio de predicción.
+- Validar con `scikit-learn` que la mejora no es sobreajuste (partición 70/30 y validación cruzada de 5 pliegues).
+- Comunicar los resultados con Matplotlib, seaborn y un **tablero interactivo de Plotly**.
+- Reproducir todo en R con `lm()` y ggplot2 como verificación independiente.
 
 ---
 
@@ -49,70 +51,57 @@ El análisis sigue una sola línea argumental:
 
 ```
 .
-├── README.md                             # Este archivo
-├── requirements.txt                      # Dependencias de Python
-├── .gitignore                            # Excluye venv/, __pycache__/, .Rhistory, .vscode/
+├── README.md                                  # Este archivo
+├── requirements.txt                           # Dependencias de Python
+├── .gitignore                                 # Excluye venv/, __pycache__/, .Rhistory, .vscode/
 ├── data/
 │   ├── dataset/
-│   │   └── consumo_energia.csv           # Dataset generado (semilla 42, reproducible)
+│   │   └── viviendas.csv                      # 150 apartamentos (semilla 42, reproducible)
 │   └── processed/
-│       ├── correlaciones.csv             # Pearson y Spearman, global y por sector
-│       ├── regresion_simple.csv          # Coeficientes de M1 con IC al 95 %
-│       ├── diagnostico_simple.csv        # Breusch-Pagan, Jarque-Bera, Durbin-Watson, RESET
-│       ├── sesgo_por_sector.csv          # Residuo medio de M1 dentro de cada sector
-│       ├── comparacion_modelos.csv       # M1 a M3: R², AIC, BIC, RMSE y supuestos
-│       ├── anova_modelos.csv             # Contraste F entre modelos anidados
-│       ├── regresion_multiple.csv        # Coeficientes de M3 con IC al 95 %
-│       ├── tarifas_estimadas.csv         # Pendiente estimada vs. tarifa observada
-│       ├── sklearn_metricas.csv          # Prueba retenida y validación cruzada
-│       ├── comparacion_modelos_r.csv     # Recálculo de las métricas en R
-│       ├── regresion_multiple_r.csv      # Coeficientes de M3 estimados con lm()
-│       └── verificacion_cruzada.csv      # Diferencia coeficiente a coeficiente Python vs. R
+│       ├── correlaciones.csv                  # Pearson de cada variable con el precio
+│       ├── regresion_simple.csv               # Coeficientes del modelo simple con IC 95 %
+│       ├── regresion_multiple.csv             # Coeficientes del modelo múltiple con IC 95 %
+│       ├── comparacion_modelos.csv            # R², R² ajustado, RMSE, MAE y AIC
+│       ├── validacion_sklearn.csv             # Prueba retenida y validación cruzada
+│       ├── regresion_multiple_r.csv           # Los mismos coeficientes estimados con lm()
+│       └── verificacion_python_r.csv          # Diferencia coeficiente a coeficiente
 ├── public/
 │   └── assets/
 │       └── images/
-│           ├── Logo.png                  # Logo institucional
-│           ├── author/                   # Foto del autor
+│           ├── Logo.png                       # Logo institucional
+│           ├── author/                        # Foto del autor
 │           └── figures/
 │               ├── python/
-│               │   ├── regression/       # 7 figuras de ajuste, diagnóstico y validación
-│               │   ├── advanced/         # 4 figuras avanzadas en seaborn
-│               │   └── dashboard/        # 2 piezas interactivas de Plotly (HTML + PNG)
-│               └── r/
-│                   └── regression/       # 3 figuras en ggplot2 + 1 diagnóstico base
+│               │   ├── regression/            # 4 figuras de Matplotlib
+│               │   ├── advanced/              # 3 figuras de seaborn
+│               │   └── dashboard/             # 2 piezas interactivas de Plotly (HTML + PNG)
+│               └── r/                         # 3 figuras de ggplot2
 └── utils/
     └── codes/
-        ├── python/                       # Fases 0 a 4
-        │   ├── dataset.py                # Fase 0 · generación del dataset
-        │   ├── simple_regression.py      # Fase 1 · correlación, M1 y diagnóstico
-        │   ├── multiple_regression.py    # Fase 2 · M2, M3 y comparación
-        │   ├── ml_regression.py          # Fase 3 · validación con scikit-learn
-        │   └── advanced_viz.py           # Fase 4 · seaborn y tablero de Plotly
-        └── R/                            # Fase 5
-            └── regression.R              # Fase 5 · verificación cruzada y ggplot2
+        ├── python/
+        │   ├── dataset.py                     # Fase 1 · generación del dataset
+        │   ├── regression.py                  # Fase 2 · statsmodels: simple y múltiple
+        │   ├── validation.py                  # Fase 3 · scikit-learn: validación
+        │   └── visualization.py               # Fase 4 · seaborn y tablero de Plotly
+        └── R/
+            └── regression.R                   # Fase 5 · lm() y ggplot2
 ```
 
 ---
 
 ## 🧪 Pipeline del Laboratorio
 
-El flujo es **secuencial**: la Fase 0 genera el dataset que consumen las demás, la Fase 4 lee las tablas de la Fase 2 para no recalcular nada, y la Fase 5 cierra el circuito comparando contra las estimaciones de Python.
+Cinco scripts, uno por fase. El flujo es **secuencial**: la Fase 1 genera el dataset que consumen las demás.
 
-| Fase | Script | Qué produce |
-|---|---|---|
-| 0 | [`dataset.py`](utils/codes/python/dataset.py) | Dataset reproducible de 120 clientes |
-| 1 | [`simple_regression.py`](utils/codes/python/simple_regression.py) | Correlaciones, modelo M1, pruebas de supuestos y 3 figuras |
-| 2 | [`multiple_regression.py`](utils/codes/python/multiple_regression.py) | Modelos M2 y M3, ANOVA, tarifas y 3 figuras |
-| 3 | [`ml_regression.py`](utils/codes/python/ml_regression.py) | Partición estratificada, validación cruzada y 1 figura |
-| 4 | [`advanced_viz.py`](utils/codes/python/advanced_viz.py) | 4 figuras de seaborn y 2 piezas interactivas de Plotly |
-| 5 | [`regression.R`](utils/codes/R/regression.R) | Recálculo con `lm()`, verificación cruzada y 4 figuras |
+| Fase | Script | Herramienta | Qué produce |
+|---|---|---|---|
+| 1 | [`dataset.py`](utils/codes/python/dataset.py) | numpy · pandas | Dataset reproducible de 150 apartamentos |
+| 2 | [`regression.py`](utils/codes/python/regression.py) | statsmodels · Matplotlib | Correlaciones, modelo simple, modelo múltiple y 3 figuras |
+| 3 | [`validation.py`](utils/codes/python/validation.py) | scikit-learn · Matplotlib | Partición 70/30, validación cruzada y 1 figura |
+| 4 | [`visualization.py`](utils/codes/python/visualization.py) | seaborn · Plotly | 3 figuras estáticas y 2 piezas interactivas |
+| 5 | [`regression.R`](utils/codes/R/regression.R) | `lm` · ggplot2 | Verificación cruzada y 3 figuras |
 
-**Características clave:**
-
-- **Reproducibilidad:** semilla fija (`default_rng(42)` en la generación y `random_state=42` en todas las particiones); cualquier ejecución produce las mismas cifras.
-- **Sin fugas de información:** el escalado y la codificación viven dentro de un `Pipeline`, de modo que se ajustan solo con los datos de entrenamiento.
-- **Verificación cruzada:** `lm()` reproduce los seis coeficientes de M3 con diferencia máxima **0,0000**; el AIC de R difiere en exactamente **2,0** por contar la varianza residual como parámetro.
-- **Rutas:** Python las resuelve desde la ubicación del script (`Path(__file__)`); R usa rutas relativas a la raíz del proyecto, así que debe ejecutarse desde ahí.
+**Reproducibilidad:** semilla fija (`default_rng(42)` en la generación y `random_state=42` en las particiones). Cualquier ejecución produce exactamente las mismas cifras que aparecen en este documento.
 
 ---
 
@@ -124,27 +113,27 @@ El flujo es **secuencial**: la Fase 0 genera el dataset que consumen las demás,
 
 | Dependencia | Versión probada | Uso |
 |---|---|---|
-| `numpy` | 2.5.2 | Cálculo numérico y mallas de predicción |
+| `numpy` | 2.5.2 | Generación del dataset y mallas de predicción |
 | `pandas` | 3.0.5 | Manejo del dataset y de todas las tablas |
-| `statsmodels` | 0.14.6 | Estimación por MCO, inferencia y pruebas de supuestos |
-| `scikit-learn` | 1.9.0 | Pipelines y validación cruzada |
-| `scipy` | 1.18.0 | Coeficientes de Pearson y Spearman |
-| `matplotlib` | 3.11.1 | Figuras de ajuste, diagnóstico y validación |
-| `seaborn` | 0.13.2 | Visualización estadística avanzada |
-| `plotly` | 6.9.0 | Figuras interactivas y tablero |
+| `scipy` | 1.18.0 | Coeficiente de correlación de Pearson |
+| `statsmodels` | 0.14.6 | Estimación por MCO e inferencia sobre los coeficientes |
+| `scikit-learn` | 1.9.0 | Partición entrenamiento/prueba y validación cruzada |
+| `matplotlib` | 3.11.1 | Figuras de ajuste, residuos, efectos y validación |
+| `seaborn` | 0.13.2 | Matriz de dispersión, mapa de calor y ajuste por estrato |
+| `plotly` | 6.9.0 | Tablero interactivo y dispersión explorable |
 | `kaleido` | 1.3.0 | Motor que exporta las figuras de Plotly a PNG |
 
 ### R
 
-- **R 4.x** (probado en 4.6.1) con **ggplot2 4.0.3**: `install.packages("ggplot2")`.
-- `lm()`, `anova()`, `confint()` y `plot(modelo)` son parte de la instalación base.
+- **R 4.x** (probado en **4.6.1**) con **ggplot2**: `install.packages("ggplot2")`.
+- `lm()`, `anova()` y `confint()` son parte de la instalación base.
 - Editor: RStudio Desktop o VS Code con la extensión **R** (REditorSupport) + `languageserver`.
 
 ---
 
 ## 🛠️ Ejecución
 
-> Todos los comandos se lanzan **desde la raíz del proyecto**, porque los scripts de R resuelven sus rutas de forma relativa.
+> Todos los comandos se lanzan **desde la raíz del proyecto**.
 
 ```bash
 # 1. Entorno de Python
@@ -152,217 +141,212 @@ py -3.14 -m venv venv           # o `python -m venv venv` si 3.14 ya es el inté
 source venv/Scripts/activate    # Git Bash (en PowerShell: venv\Scripts\activate)
 pip install -r requirements.txt
 
-# 2. Fases 0 a 4
+# 2. Fases 1 a 4
 python utils/codes/python/dataset.py
-python utils/codes/python/simple_regression.py
-python utils/codes/python/multiple_regression.py
-python utils/codes/python/ml_regression.py
-python utils/codes/python/advanced_viz.py
+python utils/codes/python/regression.py
+python utils/codes/python/validation.py
+python utils/codes/python/visualization.py
 
-# 3. Fase 5: verificación cruzada en R
+# 3. Fase 5: verificación en R
 Rscript utils/codes/R/regression.R
 ```
 
 Si `Rscript` no está en el `PATH` de Git Bash, añádelo a la sesión antes del último paso:
 
 ```bash
-export PATH="/c/Program Files/R/R-4.6.1/bin/x64:$PATH"
+export PATH="/c/Program Files/R/R-4.6.1/bin:$PATH"
 ```
 
 ---
 
-## 📈 Fase 1 · Correlación y regresión lineal simple
+## 📊 Los datos
 
-La asociación entre consumo y costo es casi perfecta, y lo es también dentro de cada sector, así que no se trata de una correlación espuria producida al mezclar tres poblaciones de escalas distintas.
+`viviendas.csv` contiene 150 apartamentos usados con seis columnas:
 
-| Grupo | n | Pearson r | R² | Spearman ρ | Tarifa media (COP/kWh) |
-|---|---|---|---|---|---|
-| **Global** | 120 | **0,9984** | 0,9969 | 0,9947 | 758,1 |
-| Residencial | 62 | 0,9820 | 0,9643 | 0,9671 | 821,8 |
-| Comercial | 40 | 0,9866 | 0,9733 | 0,9799 | 710,4 |
-| Industrial | 18 | 0,9937 | 0,9875 | 0,9856 | 645,0 |
-
-El modelo estimado es **ŷ = 50,42 + 0,6349·x**, con ambos coeficientes significativos (p < 10⁻²³).
-
-| Término | Coeficiente | Error estándar | t | IC 95 % |
-|---|---|---|---|---|
-| Intercepto | 50,4228 | 3,9229 | 12,85 | [42,65 ; 58,19] |
-| Consumo (kWh) | 0,6349 | 0,0033 | 193,40 | [0,6283 ; 0,6414] |
-
-<div align="center">
-    <img src="public/assets/images/figures/python/regression/dispersion_ajuste_simple.png" width="760" alt="Dispersión y ajuste simple">
-</div>
-
-**Ajuste por mínimos cuadrados** — la banda estrecha acota dónde está la recta media; la ancha, dónde caerá una factura individual. El color marca el sector, que todavía no forma parte del modelo.
-
-### El diagnóstico contradice al R²
-
-<div align="center">
-    <img src="public/assets/images/figures/python/regression/diagnostico_simple.png" width="900" alt="Panel de diagnóstico del modelo simple">
-</div>
-
-| Prueba | Estadístico | p-valor | Conclusión |
+| Columna | Tipo | Rango observado | Descripción |
 |---|---|---|---|
-| Breusch-Pagan (homocedasticidad) | 23,018 | 1,6 × 10⁻⁶ | **Se rechaza** |
-| Jarque-Bera (normalidad) | 214,134 | 3,2 × 10⁻⁴⁷ | **Se rechaza** |
-| Durbin-Watson (independencia) | 2,275 | — | No se rechaza |
-| RESET de Ramsey (especificación) | 0,896 | 0,346 | No se rechaza |
+| `inmueble_id` | texto | AP-001 … AP-150 | Identificador del apartamento |
+| `area_m2` | numérica | 45,7 – 137,7 | Área construida en metros cuadrados |
+| `habitaciones` | entera | 1 – 4 | Número de habitaciones |
+| `antiguedad_anios` | entera | 0 – 35 | Años desde la construcción |
+| `estrato` | entera | 3 – 5 | Estrato socioeconómico |
+| `precio_millones_cop` | numérica | 141,5 – 663,9 | **Variable respuesta**: precio en millones de COP |
 
-Que el RESET **no** rechace y Breusch-Pagan **sí** es informativo: el problema no es la forma funcional —la relación es lineal— sino que falta una variable. El residuo medio dentro de cada sector lo confirma, porque en un modelo correcto debería ser nulo en cualquier subgrupo:
-
-| Sector | n | Residuo medio (miles COP) | Desviación estándar |
-|---|---|---|---|
-| Residencial | 62 | **−4,39** | 13,36 |
-| Comercial | 40 | **+15,45** | 28,20 |
-| Industrial | 18 | **−19,23** | 57,51 |
-
-<div align="center">
-    <img src="public/assets/images/figures/python/regression/residuos_por_sector.png" width="760" alt="Residuos del modelo simple por sector">
-</div>
+El precio promedio es de **431,3 millones de COP** con una desviación estándar de 128,6.
 
 ---
 
-## 📐 Fase 2 · Regresión múltiple y selección de modelo
+## 📈 Fase 2 · Correlación y regresión simple
 
-Los tres modelos, de complejidad creciente:
+### La correlación por sí sola da una respuesta incompleta
 
-| Modelo | Especificación | k | R² ajustado | AIC | BIC | RMSE | Breusch-Pagan | Jarque-Bera |
-|---|---|---|---|---|---|---|---|---|
-| M1 | `costo ~ consumo` | 2 | 0,9968 | 1 168,9 | 1 174,5 | 31,03 | 1,6 × 10⁻⁶ | 3,2 × 10⁻⁴⁷ |
-| M2 | `costo ~ consumo + sector` | 4 | 0,9978 | 1 126,3 | 1 137,5 | 25,55 | 7,4 × 10⁻⁴ | 1,6 × 10⁻²⁵⁴ |
-| **M3** | `costo ~ consumo × sector` | 6 | **0,9979** | **1 123,2** | 1 139,9 | **24,80** | 1,2 × 10⁻³ | 1,2 × 10⁻²⁴⁸ |
+| Variable | Pearson r | p-valor | Lectura |
+|---|---|---|---|
+| **Área (m²)** | **0,7774** | 1,4 × 10⁻³¹ | Asociación fuerte y positiva |
+| Estrato | 0,4872 | 2,6 × 10⁻¹⁰ | Asociación moderada |
+| Antigüedad (años) | −0,1946 | 0,017 | Asociación débil y negativa |
+| Habitaciones | 0,0807 | **0,326** | **Sin asociación detectable** |
 
-El contraste F confirma que cada término añadido aporta: M2 mejora sobre M1 con **F = 28,71** (p < 10⁻¹⁰) y M3 sobre M2 con **F = 3,48** (p = 0,034).
+El número de habitaciones parece no tener relación con el precio. El modelo múltiple mostrará que esa conclusión es falsa: la correlación mide la relación de dos variables **ignorando todo lo demás**, y aquí "todo lo demás" incluye el área, que domina el precio y esconde el efecto de las habitaciones.
 
-<div align="center">
-    <img src="public/assets/images/figures/python/regression/comparacion_modelos.png" width="900" alt="Comparación de los tres modelos">
-</div>
+### El modelo simple: `precio ~ área`
 
-Los tres paneles usan magnitudes con **cero natural** —varianza no explicada, ΔBIC y RMSE— en lugar de graficar R² con el eje truncado, que es la forma habitual de exagerar diferencias en la cuarta cifra decimal.
+| Término | Coeficiente | Error estándar | t | p-valor | IC 95 % |
+|---|---|---|---|---|---|
+| Intercepto | 81,085 | 24,220 | 3,35 | 1,0 × 10⁻³ | [33,22 ; 128,95] |
+| **Área (m²)** | **3,845** | 0,256 | 15,03 | 1,4 × 10⁻³¹ | [3,34 ; 4,35] |
 
-### Las pendientes son tarifas
-
-<div align="center">
-    <img src="public/assets/images/figures/python/regression/ajuste_por_sector.png" width="900" alt="Ajuste por sector y tarifas implícitas">
-</div>
-
-| Sector | Pendiente estimada | Tarifa implícita (COP/kWh) | Tarifa media observada | Diferencia |
-|---|---|---|---|---|
-| Residencial | 0,7916 | 791,6 | 821,8 | −3,67 % |
-| Comercial | 0,7048 | 704,8 | 710,4 | −0,79 % |
-| Industrial | 0,6710 | 671,0 | 645,0 | +4,03 % |
-
-La tarifa observada se calcula como `costo × 1000 / consumo`, **sin pasar por la regresión**: que las pendientes la reproduzcan con menos del 4 % de diferencia es una validación externa del modelo. El descuento por escala queda cuantificado: el sector Industrial paga **121 COP/kWh menos** que el Residencial.
+El modelo estimado es **precio = 81,1 + 3,85 · área**, y su pendiente se lee directamente: **cada metro cuadrado adicional suma 3,85 millones de COP** al precio. El R² es **0,6043**, así que el área explica el 60 % de la variabilidad y deja el 40 % restante sin explicar.
 
 <div align="center">
-    <img src="public/assets/images/figures/python/regression/coeficientes_ic.png" width="880" alt="Coeficientes de M3 con intervalos de confianza">
+    <img src="public/assets/images/figures/python/regression/ajuste_simple.png" width="760" alt="Regresión simple con banda de confianza">
 </div>
+
+**Ajuste por mínimos cuadrados** — la banda naranja es el intervalo de confianza al 95 % de la recta. La dispersión vertical de los puntos alrededor de ella es, visualmente, lo que las otras tres variables tendrán que explicar.
+
+---
+
+## 📐 Fase 2 · Regresión múltiple y comparación de modelos
+
+Al añadir habitaciones, antigüedad y estrato, **las cuatro variables resultan significativas**, incluida la que la correlación descartaba:
+
+| Término | Coeficiente | Error estándar | t | p-valor | IC 95 % | Significativo |
+|---|---|---|---|---|---|---|
+| Intercepto | −237,026 | 24,137 | −9,82 | 9,2 × 10⁻¹⁸ | [−284,73 ; −189,32] | sí |
+| **Área** (por m²) | **+3,797** | 0,133 | 28,51 | 2,5 × 10⁻⁶¹ | [3,53 ; 4,06] | sí |
+| **Habitaciones** (por unidad) | **+16,010** | 3,482 | 4,60 | 9,2 × 10⁻⁶ | [9,13 ; 22,89] | sí |
+| **Antigüedad** (por año) | **−2,475** | 0,359 | −6,90 | 1,5 × 10⁻¹⁰ | [−3,18 ; −1,77] | sí |
+| **Estrato** (por nivel) | **+85,185** | 4,440 | 19,18 | 1,3 × 10⁻⁴¹ | [76,41 ; 93,96] | sí |
+
+<div align="center">
+    <img src="public/assets/images/figures/python/regression/efecto_variables.png" width="820" alt="Efecto de cada variable con intervalo de confianza">
+</div>
+
+**Cada coeficiente responde una pregunta de negocio distinta**, siempre *manteniendo constantes las demás variables*:
+
+- Cada **m²** adicional vale **3,80 millones**.
+- Cada **habitación** adicional suma **16,0 millones** — el equivalente a 4,2 m².
+- Cada **año de antigüedad** resta **2,48 millones**; en diez años, 24,8 millones (6,5 m²).
+- Subir **un nivel de estrato** vale **85,2 millones**, tanto como 22,4 m² adicionales.
+
+> **El hallazgo central.** Las habitaciones pasan de `p = 0,326` (irrelevantes) a `p = 9,2 × 10⁻⁶` (altamente significativas). No cambió el dato: cambió la pregunta. La correlación pregunta *"¿los apartamentos con más habitaciones son más caros?"* y la respuesta es "no necesariamente, porque hay apartamentos pequeños con tres habitaciones y grandes con dos". La regresión múltiple pregunta *"entre dos apartamentos de la misma área, antigüedad y estrato, ¿vale más el que tiene una habitación extra?"* y la respuesta es sí, 16 millones más.
+
+### Comparación de los dos modelos
+
+| Modelo | Fórmula | Variables | R² | R² ajustado | RMSE | MAE | AIC |
+|---|---|---|---|---|---|---|---|
+| Simple | `precio ~ área` | 1 | 0,6043 | 0,6016 | 80,60 | 66,72 | 1 746,5 |
+| **Múltiple** | `precio ~ área + habitaciones + antigüedad + estrato` | 4 | **0,8960** | **0,8932** | **41,32** | **33,07** | **1 552,1** |
+
+El R² ajustado sube igual que el R², de modo que la mejora no es el efecto mecánico de agregar variables. El error medio de estimación **cae a la mitad**, de 66,7 a 33,1 millones.
+
+<div align="center">
+    <img src="public/assets/images/figures/python/regression/comparacion_residuos.png" width="900" alt="Errores de los dos modelos en la misma escala">
+</div>
+
+**Los errores de ambos modelos en la misma escala** — a la izquierda el modelo simple, con errores que llegan a ±250 millones; a la derecha el múltiple, con la nube claramente más estrecha y centrada en cero.
 
 ---
 
 ## 🤖 Fase 3 · Validación con scikit-learn
 
-Partición estratificada 70/30 (84 clientes de entrenamiento, 36 de prueba) y validación cruzada de 10 pliegues sobre las dos especificaciones centrales.
+Un R² alto sobre los mismos datos con los que se ajustó el modelo no prueba nada: hay que medirlo sobre apartamentos que el modelo **nunca vio**.
 
-| Estimador | R² prueba | RMSE prueba | MAPE prueba | R² CV | RMSE CV |
+| Modelo | R² entrenamiento | R² prueba | RMSE prueba | MAE prueba | R² validación cruzada |
 |---|---|---|---|---|---|
-| MCO simple (solo consumo) | 0,9934 | 39,27 | 5,12 % | 0,9942 | 30,61 ± 10,01 |
-| **MCO múltiple (consumo × sector)** | **0,9944** | **36,26** | **3,68 %** | **0,9960** | **25,49** ± 10,53 |
-
-Añadir el sector **también mejora fuera de la muestra**: el RMSE en validación cruzada cae un **16,7 %**. La ganancia no es un artefacto del ajuste dentro de la muestra, que es lo que un R² creciente por sí solo no puede descartar.
+| Simple | 0,6135 | 0,5744 | 88,15 | 75,29 | 0,6041 ± 0,0620 |
+| **Múltiple** | 0,8934 | **0,8955** | **43,69** | **34,75** | **0,8888 ± 0,0162** |
 
 <div align="center">
-    <img src="public/assets/images/figures/python/regression/real_vs_predicho.png" width="900" alt="Validación sobre el conjunto de prueba">
+    <img src="public/assets/images/figures/python/regression/validacion_sklearn.png" width="900" alt="Validación con scikit-learn">
 </div>
 
-Sobre los 36 clientes que el modelo nunca vio, el R² es **0,9944** y el error porcentual absoluto medio, **3,68 %**. Los residuos ya no muestran el sesgo por sector que delataba al modelo simple.
+Tres lecturas de esta tabla:
+
+- **No hay sobreajuste.** La brecha entre entrenamiento y prueba del modelo múltiple es de **−0,0021**: el modelo se comporta igual de bien dentro y fuera de la muestra.
+- **La ventaja es consistente.** En los cinco pliegues de la validación cruzada el modelo múltiple gana, con una desviación estándar de 0,016 frente a 0,062 del simple: además de acertar más, es **cuatro veces más estable**.
+- **El error es utilizable.** Sobre los 45 apartamentos de prueba el modelo se equivoca en promedio **34,8 millones**, un **8,1 %** del precio medio.
 
 ---
 
 ## 🎨 Fase 4 · Visualización avanzada
 
-### seaborn · figuras estáticas de alta densidad
+### seaborn · figuras estáticas
 
 | | |
 |---|---|
 | ![Matriz de dispersión](public/assets/images/figures/python/advanced/sns_matriz_dispersion.png) | ![Mapa de calor de correlaciones](public/assets/images/figures/python/advanced/sns_heatmap_correlacion.png) |
-| **Matriz de dispersión** — cruza las tres variables continuas y pone la densidad en la diagonal: los sectores ocupan regiones casi disjuntas en cualquier plano | **Mapa de calor** — la tarifa correlaciona **−0,76** con el consumo, que es el descuento por escala antes de modelarlo |
+| **Matriz de dispersión** (`pairplot`) — cruza las variables continuas y colorea por estrato: el precio se ordena en bandas superpuestas, una por estrato | **Mapa de calor** (`heatmap`) — la antigüedad es la única variable que empuja el precio hacia abajo; el triángulo inferior evita repetir información simétrica |
 
 <div align="center">
-    <img src="public/assets/images/figures/python/advanced/sns_lmplot_sectores.png" width="900" alt="Regresión por facetas con seaborn">
+    <img src="public/assets/images/figures/python/advanced/sns_ajuste_por_estrato.png" width="900" alt="Regresión por estrato con seaborn">
 </div>
 
-**`lmplot` con facetas** — una regresión independiente y su banda de confianza dentro de cada sector, cada panel en su propia escala para que el sector Industrial no aplaste a los otros dos.
-
-<div align="center">
-    <img src="public/assets/images/figures/python/advanced/sns_residuos_lowess.png" width="900" alt="Residuos con suavizado lowess">
-</div>
-
-**`residplot` con suavizado local** — la curva lowess debe ser plana si el modelo capturó toda la estructura; en M1 no lo es, en M3 sí.
+**`lmplot` por estrato** — tres rectas casi paralelas. Es exactamente el supuesto del modelo múltiple hecho gráfico: el estrato **desplaza** el precio hacia arriba sin cambiar cuánto vale el metro cuadrado dentro de cada uno.
 
 ### Plotly · piezas interactivas
 
 <div align="center">
-    <img src="public/assets/images/figures/python/dashboard/dashboard_regresion.png" width="960" alt="Tablero interactivo de regresión">
+    <img src="public/assets/images/figures/python/dashboard/dashboard.png" width="960" alt="Tablero interactivo de precios">
 </div>
 
-**[`dashboard_regresion.html`](public/assets/images/figures/python/dashboard/dashboard_regresion.html)** reúne las cuatro preguntas del análisis en una sola página —cómo ajusta, qué queda en los residuos, cuál modelo gana y qué coeficientes son distintos de cero— con botones que filtran los paneles por sector sin regenerar nada.
+**[`dashboard.html`](public/assets/images/figures/python/dashboard/dashboard.html)** reúne el análisis completo en una página navegable, con cuatro paneles y un **menú desplegable que filtra por estrato**:
+
+1. Precio frente a área, con la ficha completa de cada apartamento al pasar el cursor.
+2. Precio promedio por estrato (359,3 · 447,4 · 517,9 millones).
+3. Precio real frente al estimado por el modelo, contra la diagonal de predicción perfecta.
+4. Cuánto suma o resta cada variable al precio.
 
 <div align="center">
-    <img src="public/assets/images/figures/python/dashboard/scatter_interactivo.png" width="900" alt="Dispersión interactiva">
+    <img src="public/assets/images/figures/python/dashboard/dispersion_interactiva.png" width="900" alt="Dispersión interactiva">
 </div>
 
-**[`scatter_interactivo.html`](public/assets/images/figures/python/dashboard/scatter_interactivo.html)** — tendencia por sector con identificación de cada cliente al pasar el cursor y leyenda filtrable.
+**[`dispersion_interactiva.html`](public/assets/images/figures/python/dashboard/dispersion_interactiva.html)** — dispersión con línea de tendencia MCO, color por estrato y tamaño de punto proporcional al número de habitaciones. El zoom y el detalle al pasar el cursor permiten inspeccionar apartamento por apartamento, algo imposible en una imagen fija.
 
 ---
 
-## 🔁 Fase 5 · Verificación cruzada en R
+## 🔁 Fase 5 · Verificación en R
 
 `lm()` reestima los mismos modelos y **coincide dígito a dígito** con `statsmodels`:
 
 | Término | Python (`statsmodels`) | R (`lm`) | Diferencia |
 |---|---|---|---|
-| Intercepto (Residencial) | 7,1067 | 7,1067 | 0,0000 |
-| Sector Comercial | −2,6594 | −2,6594 | 0,0000 |
-| Sector Industrial | −71,9656 | −71,9656 | 0,0000 |
-| Pendiente Residencial | 0,7916 | 0,7916 | 0,0000 |
-| Δ pendiente Comercial | −0,0868 | −0,0868 | 0,0000 |
-| Δ pendiente Industrial | −0,1206 | −0,1206 | 0,0000 |
+| Intercepto | −237,026 | −237,026 | 0,000000 |
+| Área | 3,797 | 3,797 | 0,000000 |
+| Habitaciones | 16,010 | 16,010 | 0,000000 |
+| Antigüedad | −2,475 | −2,475 | 0,000000 |
+| Estrato | 85,185 | 85,185 | 0,000000 |
 
-> La comparación se empareja **por nombre de término**, no por posición: R ordena la matriz de diseño poniendo primero las variables continuas y `patsy` primero las categóricas. El AIC de R supera al de `statsmodels` en exactamente **2,0** porque cuenta la varianza residual como un parámetro adicional; la diferencia es constante y no altera el orden de los modelos.
+El contraste F de `anova()` entre los dos modelos da **F = 135,63** con p < 2,2 × 10⁻¹⁶: las tres variables añadidas justifican con holgura los grados de libertad que consumen.
 
 | | |
 |---|---|
-| ![Ajuste simple en ggplot2](public/assets/images/figures/r/regression/ggplot_ajuste_simple.png) | ![Residuos por sector en ggplot2](public/assets/images/figures/r/regression/ggplot_residuos_por_sector.png) |
-| **`geom_smooth(method = "lm")`** — la gramática de gráficos declara el ajuste como una capa más, con su banda de confianza incluida | **El sesgo desaparece al incluir la interacción** — el mismo hallazgo de Python, resuelto con `facet_wrap` |
+| ![Ajuste simple en ggplot2](public/assets/images/figures/r/ggplot_ajuste_simple.png) | ![Real frente a estimado en ggplot2](public/assets/images/figures/r/ggplot_real_vs_estimado.png) |
+| **`geom_smooth(method = "lm")`** — la gramática de gráficos declara el ajuste como una capa más, con su banda de confianza incluida | **Precio real frente al estimado** — la diagonal es la predicción perfecta; el error típico del modelo es de 42,0 millones |
 
 <div align="center">
-    <img src="public/assets/images/figures/r/regression/ggplot_ajuste_por_sector.png" width="900" alt="Regresión por sector en ggplot2">
+    <img src="public/assets/images/figures/r/ggplot_facetas_estrato.png" width="900" alt="Una regresión por estrato en ggplot2">
 </div>
 
-<div align="center">
-    <img src="public/assets/images/figures/r/regression/base_diagnostico_m1.png" width="860" alt="Diagnóstico canónico de M1 en R base">
-</div>
-
-**`plot(modelo)` de la graficación base** — las cuatro vistas canónicas del diagnóstico de un `lm`, con las observaciones influyentes etiquetadas. R las entrega en una sola llamada; en Python hubo que construirlas una por una.
+**`facet_wrap` por estrato** — la misma idea del `lmplot` de seaborn resuelta con la gramática de ggplot2: un panel por estrato, misma pendiente, distinta altura.
 
 ---
 
 ## 🧠 Conclusiones
 
-- **Un R² de 0,9969 puede acompañar a un modelo mal especificado.** La regresión simple ajusta casi perfecto y aun así falla en dos de los cuatro supuestos, con residuos medios de −4,4, +15,5 y −19,2 miles de COP según el sector. El diagnóstico, no la bondad de ajuste, es lo que detecta el problema.
-- **Los coeficientes de un buen modelo tienen nombre.** Las pendientes de M3 son tarifas (791,6, 704,8 y 671,0 COP/kWh) que reproducen con menos del 4 % de error el cociente `costo/consumo` calculado directamente. Esa correspondencia es una validación externa que ningún criterio de información puede dar.
-- **El descuento por escala queda cuantificado.** El sector Industrial paga 121 COP/kWh menos que el Residencial por cada unidad consumida, una cifra directamente utilizable para revisar la política tarifaria.
-- **La mejora se sostiene fuera de la muestra.** La validación cruzada de 10 pliegues confirma que el modelo múltiple reduce el error de predicción un 16,7 % frente al simple, y sobre 36 clientes nunca vistos alcanza un R² de 0,9944 con un error porcentual medio del 3,68 %.
-- **Queda una limitación reconocida.** M3 corrige el sesgo por sector pero sigue rechazando la homocedasticidad (Breusch-Pagan p = 1,2 × 10⁻³): el error crece con el tamaño de la factura, así que los intervalos de predicción de los clientes grandes deben leerse con cautela.
-- **La visualización avanzada no es adorno, es parte del diagnóstico.** El sesgo por sector se descubrió coloreando un gráfico de residuos, y el suavizado lowess de seaborn lo confirmó sin suponer forma funcional alguna. El tablero de Plotly traslada ese mismo razonamiento a un lector que no ejecuta código.
-- **Dos implementaciones independientes coinciden dígito a dígito.** `lm()` reproduce los seis coeficientes de M3 con diferencia máxima 0,0000, y las discrepancias de convención —orden de la matriz de diseño y conteo de parámetros en el AIC— resultan explicables y constantes.
+- **La correlación simple puede esconder un efecto real.** El número de habitaciones no muestra asociación con el precio (r = 0,08, p = 0,33) y sin embargo es una variable altamente significativa del modelo múltiple (+16,0 millones, p = 9,2 × 10⁻⁶). La diferencia está en la pregunta: comparar apartamentos *cualesquiera* no es lo mismo que comparar apartamentos *equivalentes*.
+- **El modelo múltiple reduce el error a la mitad.** Pasar de una variable a cuatro sube el R² de 0,604 a 0,896 y baja el error medio de estimación de 66,7 a 33,1 millones de COP.
+- **Los coeficientes son directamente accionables.** Traducidos a metros cuadrados equivalentes: una habitación extra vale 4,2 m², un nivel de estrato vale 22,4 m² y cada década de antigüedad cuesta 6,5 m². Son cifras que un avaluador o un comprador pueden usar tal cual para decidir.
+- **La ganancia no es sobreajuste.** La brecha entre el R² de entrenamiento y el de prueba es de −0,0021, y en los cinco pliegues de la validación cruzada el modelo múltiple gana con una variabilidad cuatro veces menor que la del simple.
+- **El error residual está acotado y es explicable.** El modelo se equivoca en promedio un 8,1 % del precio. El 10 % de variabilidad que no explica corresponde a lo que las cuatro variables no capturan —ubicación exacta dentro del barrio, estado de los acabados, piso, vista— y marca el límite honesto de un avalúo automático basado solo en la ficha técnica.
+- **La visualización sostiene el argumento, no lo decora.** El `lmplot` por estrato muestra el supuesto de rectas paralelas que el modelo asume; el panel de residuos comparados hace visible la reducción del error; el tablero de Plotly traslada todo el razonamiento a un lector que no ejecuta código.
+- **Dos implementaciones independientes coinciden.** `lm()` reproduce los cinco coeficientes con diferencia máxima 0,000000, lo que descarta que el resultado dependa de la herramienta.
 
 ---
 
 ## 🔑 Palabras Clave
 
-`Análisis de Regresión` · `Regresión Simple` · `Regresión Múltiple` · `statsmodels` · `scikit-learn` · `Diagnóstico de Supuestos` · `Validación Cruzada` · `Visualización Avanzada` · `seaborn` · `Plotly` · `Dashboard Interactivo` · `ggplot2` · `R` · `Ciencia de Datos` · `Python`
+`Análisis de Regresión` · `Regresión Lineal Simple` · `Regresión Lineal Múltiple` · `statsmodels` · `scikit-learn` · `Validación Cruzada` · `Visualización Avanzada` · `Matplotlib` · `seaborn` · `Plotly` · `Dashboard Interactivo` · `ggplot2` · `R` · `Ciencia de Datos` · `Python`
 
 ---
 

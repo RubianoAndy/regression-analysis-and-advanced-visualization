@@ -1,7 +1,0 @@
-"termino","termino_r","python","r","diferencia_absoluta"
-"Intercepto (Residencial)","(Intercept)",7.1067,7.1067,0
-"Sector Comercial (Δ intercepto)","sectorComercial",-2.6594,-2.6594,0
-"Sector Industrial (Δ intercepto)","sectorIndustrial",-71.9656,-71.9656,0
-"consumo_kwh (pendiente Residencial)","consumo_kwh",0.7916,0.7916,0
-"consumo × Comercial (Δ pendiente)","consumo_kwh:sectorComercial",-0.0868,-0.0868,0
-"consumo × Industrial (Δ pendiente)","consumo_kwh:sectorIndustrial",-0.1206,-0.1206,0

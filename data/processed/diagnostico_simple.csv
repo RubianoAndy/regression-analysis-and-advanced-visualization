@@ -1,5 +1,0 @@
-prueba,estadistico,p_valor,supuesto,conclusion
-Breusch-Pagan (homocedasticidad),23.018,1.61e-06,Varianza constante,Se rechaza
-Jarque-Bera (normalidad),214.134,3.17e-47,Residuos normales,Se rechaza
-Durbin-Watson (independencia),2.275,-,Residuos no correlacionados,No se rechaza
-RESET de Ramsey (especificación),0.896,3.46e-01,Forma lineal adecuada,No se rechaza
