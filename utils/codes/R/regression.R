@@ -13,9 +13,7 @@
 
 library(ggplot2)
 
-# ---------------------------------------------------------------------------
 # 0. Rutas
-# ---------------------------------------------------------------------------
 # R no tiene un equivalente de __file__, asi que la ruta del script se busca en
 # los dos modos de ejecucion posibles: Rscript (argumento --file=) y el boton
 # Source de RStudio. Si ninguno funciona se usa el directorio de trabajo.
@@ -52,16 +50,12 @@ tema <- theme_minimal(base_size = 11) +
         plot.subtitle = element_text(colour = "grey35"),
         legend.position = "bottom")
 
-# ---------------------------------------------------------------------------
 # 1. Regresion lineal simple: precio ~ area
-# ---------------------------------------------------------------------------
 simple <- lm(precio_millones_cop ~ area_m2, data = df)
 cat("=== Modelo simple ===\n")
 print(summary(simple))
 
-# ---------------------------------------------------------------------------
 # 2. Regresion lineal multiple
-# ---------------------------------------------------------------------------
 multiple <- lm(precio_millones_cop ~ area_m2 + habitaciones +
                  antiguedad_anios + estrato, data = df)
 cat("\n=== Modelo multiple ===\n")
@@ -72,9 +66,7 @@ print(summary(multiple))
 cat("\n=== Contraste F: el modelo multiple frente al simple ===\n")
 print(anova(simple, multiple))
 
-# ---------------------------------------------------------------------------
 # 3. Coeficientes y comparacion con Python
-# ---------------------------------------------------------------------------
 resumen <- summary(multiple)$coefficients
 intervalos <- confint(multiple)
 coeficientes_r <- data.frame(
@@ -116,9 +108,7 @@ r2_multiple <- summary(multiple)$r.squared
 cat(sprintf("\nR2 simple = %.4f | R2 multiple = %.4f | ganancia = %.1f p.p.\n",
             r2_simple, r2_multiple, (r2_multiple - r2_simple) * 100))
 
-# ---------------------------------------------------------------------------
 # 4. Figuras con ggplot2
-# ---------------------------------------------------------------------------
 df$estrato_f <- factor(df$estrato)
 df$precio_estimado <- round(fitted(multiple), 1)
 

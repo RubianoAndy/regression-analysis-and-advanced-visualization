@@ -57,9 +57,7 @@ ETIQUETAS = {
     "precio_millones_cop": "Precio (millones COP)",
 }
 
-# ===========================================================================
 # BLOQUE 1 - Figuras estáticas con seaborn
-# ===========================================================================
 
 # Figura 1: matriz de dispersión. Cruza todas las variables a la vez y colorea
 # por estrato; de un vistazo se ve que el estrato separa el precio en bandas.
@@ -112,9 +110,7 @@ plt.close(rejilla.figure)
 
 print("OK - seaborn: 3 figuras en figures/python/advanced")
 
-# ===========================================================================
 # BLOQUE 2 - Piezas interactivas con Plotly
-# ===========================================================================
 
 # Pieza 1: dispersión interactiva con línea de tendencia MCO. Al pasar el
 # cursor muestra la ficha de cada apartamento, algo imposible en una imagen.

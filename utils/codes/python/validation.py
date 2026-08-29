@@ -48,9 +48,7 @@ ESPECIFICACIONES = {
     "Múltiple": ["area_m2", "habitaciones", "antiguedad_anios", "estrato"],
 }
 
-# ---------------------------------------------------------------------------
 # 1. Partición entrenamiento / prueba.
-# ---------------------------------------------------------------------------
 # El 30 % de los apartamentos se aparta antes de ajustar nada: el modelo no los
 # ve durante el entrenamiento y sirven para medir el error real de predicción.
 indices = np.arange(len(df))
@@ -59,9 +57,7 @@ idx_train, idx_test = train_test_split(indices, test_size=0.30,
 print(f"Entrenamiento: {len(idx_train)} apartamentos | "
       f"Prueba: {len(idx_test)} apartamentos")
 
-# ---------------------------------------------------------------------------
 # 2. Ajuste, evaluación y validación cruzada de cada especificación.
-# ---------------------------------------------------------------------------
 # Un solo corte 70/30 depende del azar de qué 45 apartamentos tocaron la
 # prueba. La validación cruzada repite el experimento 5 veces con particiones
 # distintas, así que su promedio es una estimación más estable.
@@ -109,9 +105,7 @@ brecha = (metricas.loc[metricas["modelo"] == mejor, "r2_entrenamiento"].iloc[0]
 print(f"Brecha entrenamiento - prueba: {brecha:+.4f} "
       f"({'sin sobreajuste' if abs(brecha) < 0.05 else 'revisar sobreajuste'}).")
 
-# ---------------------------------------------------------------------------
 # 3. Figura de validación.
-# ---------------------------------------------------------------------------
 # Izquierda: cada punto es un apartamento de prueba; la diagonal es la
 # predicción perfecta y la distancia a ella es el error cometido.
 # Derecha: el R² pliegue a pliegue, para ver que la ventaja del modelo

@@ -42,9 +42,7 @@ if not DATASET.exists():
 df = pd.read_csv(DATASET)
 OBJETIVO = "precio_millones_cop"
 
-# ---------------------------------------------------------------------------
 # 1. Correlación: qué tan asociada está cada variable con el precio.
-# ---------------------------------------------------------------------------
 # El coeficiente de Pearson mide la fuerza y el signo de la relación lineal.
 # Sirve para ordenar las variables candidatas antes de modelar nada.
 PREDICTORAS = ["area_m2", "habitaciones", "antiguedad_anios", "estrato"]
@@ -63,9 +61,7 @@ correlaciones.to_csv(TABLAS / "correlaciones.csv", index=False)
 print("Correlación de cada variable con el precio")
 print(correlaciones.to_string(index=False))
 
-# ---------------------------------------------------------------------------
 # 2. Regresión lineal simple: precio ~ área.
-# ---------------------------------------------------------------------------
 # El área es la variable más correlacionada, así que es el punto de partida
 # natural. La pendiente se lee directamente como millones de COP por m².
 simple = smf.ols(f"{OBJETIVO} ~ area_m2", data=df).fit()
@@ -86,9 +82,7 @@ coef_simple.to_csv(TABLAS / "regresion_simple.csv", index=False)
 print("\nCoeficientes del modelo simple")
 print(coef_simple.to_string(index=False))
 
-# ---------------------------------------------------------------------------
 # 3. Regresión lineal múltiple: se añaden las tres variables restantes.
-# ---------------------------------------------------------------------------
 # Cada coeficiente se interpreta "manteniendo constantes las demás variables",
 # que es justo lo que el modelo simple no puede hacer.
 multiple = smf.ols(f"{OBJETIVO} ~ " + " + ".join(PREDICTORAS), data=df).fit()
@@ -110,9 +104,7 @@ coef_multiple.to_csv(TABLAS / "regresion_multiple.csv", index=False)
 print("\nCoeficientes del modelo múltiple")
 print(coef_multiple.to_string(index=False))
 
-# ---------------------------------------------------------------------------
 # 4. Comparación de los dos modelos.
-# ---------------------------------------------------------------------------
 # El R² siempre sube al agregar variables; por eso se acompaña del R² ajustado,
 # que penaliza los términos inútiles, y del RMSE, que está en millones de COP y
 # se le puede explicar a alguien que no sepa estadística.
@@ -147,9 +139,7 @@ reduccion = (1 - comparacion.loc[1, "rmse_millones"]
 print(f"\nEl modelo múltiple explica {ganancia:.1f} puntos porcentuales más de "
       f"la variabilidad del precio y reduce el error medio un {reduccion:.1f} %.")
 
-# ---------------------------------------------------------------------------
 # 5. Figuras con Matplotlib.
-# ---------------------------------------------------------------------------
 
 # Figura 1: la recta ajustada del modelo simple con su banda de confianza. La
 # dispersión vertical alrededor de la recta es, visualmente, lo que las otras
