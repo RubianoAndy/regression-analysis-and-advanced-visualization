@@ -1,0 +1,173 @@
+/* Estilos de los controles de la barra lateral.
+ *
+ * Dash sirve automáticamente todo lo que encuentre en ``assets/`` -de ahí el
+ * nombre de la carpeta-, y esta hoja existe porque la prop ``style`` de
+ * ``dcc.Dropdown`` ya no basta: en Dash 4 el componente no la vuelca como
+ * atributo inline del control, sino que la reparte entre sus partes internas.
+ * El efecto práctico es que el ``color: #FFFFFF`` pensado para el fondo azul
+ * oscuro se aplicaba sobre el fondo blanco por defecto y la selección quedaba
+ * en blanco sobre blanco, ilegible. Aquí se estilan las partes por su clase.
+ *
+ * El desplegable abierto se monta en un portal al final del <body>, fuera de la
+ * barra lateral, así que sus reglas no pueden colgar de .sidebar-dropdown.
+ */
+
+/* --- Armazón de la aplicación ----------------------------------------------
+ *
+ * El dashboard ocupa exactamente la altura de la ventana y NO deja crecer a la
+ * página: la barra lateral se mantiene completa de arriba abajo y es el lienzo
+ * de la derecha el que se desplaza por dentro. Sin esto el documento crece
+ * hasta la altura del contenido, la barra lateral -que mide una pantalla- se
+ * queda flotando arriba y debajo aparece una franja vacía.
+ *
+ * Dash no normaliza el <body>, que conserva su margen por defecto de 8 px, así
+ * que hay que anularlo aquí o quedaría un borde blanco alrededor de todo.
+ */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Contenedores que Dash monta entre el <body> y el layout.
+ *
+ * En Dash 4 no es uno solo: la cadena real es
+ *
+ *   body > #react-entry-point > #_dash-global-error-container > div
+ *        > #_dash-app-content > (layout)
+ *
+ * y una altura en porcentaje solo se resuelve si TODOS los ancestros tienen
+ * altura definida. Basta con que uno quede en ``auto`` para que el
+ * ``height: 100%`` del layout se ignore y la página crezca hasta la altura del
+ * contenido: la barra lateral se queda corta, flotando arriba, y debajo aparece
+ * una franja vacía. Por eso se fuerza el 100 % en toda la cadena y no solo en
+ * el punto de entrada.
+ */
+#react-entry-point,
+#_dash-global-error-container,
+#_dash-global-error-container > div,
+#_dash-app-content {
+  height: 100%;
+}
+
+/* --- Control cerrado -------------------------------------------------------- */
+.sidebar-dropdown.dash-dropdown {
+  background-color: #01376B;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  font-size: 12px;
+  min-height: 34px;
+}
+
+.sidebar-dropdown.dash-dropdown:hover {
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+.sidebar-dropdown .dash-dropdown-value,
+.sidebar-dropdown .dash-dropdown-value-item,
+.sidebar-dropdown .dash-dropdown-value-item span {
+  color: #ffffff;
+}
+
+/* Cada valor seleccionado va en una pastilla, para que se distinga del resto
+   cuando hay varios estratos elegidos a la vez. */
+.sidebar-dropdown .dash-dropdown-value-item {
+  background-color: rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  padding: 1px 7px;
+  margin-right: 4px;
+}
+
+.sidebar-dropdown .dash-dropdown-placeholder {
+  color: #7a99b8;
+}
+
+.sidebar-dropdown .dash-dropdown-clear,
+.sidebar-dropdown .dash-dropdown-trigger-icon {
+  color: #7a99b8;
+}
+
+.sidebar-dropdown .dash-dropdown-clear:hover {
+  color: #ffcd00;
+}
+
+/* --- Botón de limpiar filtros ---------------------------------------------- */
+#btn-clear:hover {
+  border-color: #ffcd00 !important;
+  color: #ffcd00 !important;
+}
+
+/* --- Deslizadores de área y antigüedad --------------------------------------
+ *
+ * Dash 4 renombró las clases internas del deslizador: ya no son las de
+ * rc-slider (``rc-slider-track``, ``rc-slider-handle``) sino ``dash-slider-*``.
+ * Una hoja escrita para Dash 2 sigue cargando sin error y sin efecto alguno, y
+ * el control se queda con el violeta por defecto del componente.
+ *
+ * ``dash-slider-track`` es el carril completo y ``dash-slider-range`` el tramo
+ * seleccionado, al revés de lo que sugieren los nombres de rc-slider.
+ */
+#filter-area .dash-slider-range,
+#filter-antiguedad .dash-slider-range {
+  background-color: #ffcd00;
+}
+
+#filter-area .dash-slider-track,
+#filter-antiguedad .dash-slider-track {
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+#filter-area .dash-slider-thumb,
+#filter-antiguedad .dash-slider-thumb {
+  border-color: #ffcd00;
+  background-color: #ffcd00;
+  opacity: 1;
+}
+
+#filter-area .dash-slider-thumb:hover,
+#filter-area .dash-slider-thumb:focus,
+#filter-antiguedad .dash-slider-thumb:hover,
+#filter-antiguedad .dash-slider-thumb:focus {
+  box-shadow: 0 0 0 4px rgba(255, 205, 0, 0.25);
+}
+
+/* Las marcas numéricas del carril: el color se fija en Python, pero el punto
+   que las acompaña hereda el fondo claro del componente. */
+#filter-area .dash-slider-mark,
+#filter-antiguedad .dash-slider-mark {
+  color: #7a99b8;
+}
+
+/* La burbuja que aparece al arrastrar. */
+#filter-area .dash-slider-tooltip,
+#filter-antiguedad .dash-slider-tooltip {
+  background-color: #01376b;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* --- Selector de especificación --------------------------------------------- */
+#filter-modelo input[type="radio"] {
+  accent-color: #ffcd00;
+}
+
+/* --- Barra de desplazamiento ------------------------------------------------ */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(122, 153, 184, 0.45);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(122, 153, 184, 0.7);
+}

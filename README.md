@@ -17,7 +17,7 @@
 | **Asignatura** | Ciencia de Datos — Actividad 4 |
 | **Programa** | Maestría en Inteligencia Artificial |
 | **Universidad** | Universidad de La Salle |
-| **Herramientas** | Python 3.14 (statsmodels · scikit-learn · Matplotlib · seaborn · Plotly) y R 4.6 (`lm` · ggplot2) |
+| **Herramientas** | Python 3.14 (statsmodels · scikit-learn · Matplotlib · seaborn · Plotly · Dash) y R 4.6 (`lm` · ggplot2) |
 | **Año** | 2026 |
 | **Estado** | Completado |
 
@@ -42,7 +42,8 @@ La pregunta es una sola y se responde en cuatro pasos:
 - Estimar la regresión múltiple e interpretar cada coeficiente **manteniendo constantes las demás variables**.
 - Comparar ambos modelos con R², R² ajustado y error medio de predicción.
 - Validar con `scikit-learn` que la mejora no es sobreajuste (partición 70/30 y validación cruzada de 5 pliegues).
-- Comunicar los resultados con Matplotlib, seaborn y un **tablero interactivo de Plotly**.
+- Comunicar los resultados con Matplotlib, seaborn y dos piezas interactivas de Plotly.
+- Construir un **dashboard en Dash que reestima el modelo** sobre el subconjunto que elija el lector.
 - Reproducir todo en R con `lm()` y ggplot2 como verificación independiente.
 
 ---
@@ -54,6 +55,15 @@ La pregunta es una sola y se responde en cuatro pasos:
 ├── README.md                                  # Este archivo
 ├── requirements.txt                           # Dependencias de Python
 ├── .gitignore                                 # Excluye venv/, __pycache__/, .Rhistory, .vscode/
+├── app.py                                     # Punto de entrada del dashboard de Dash
+├── assets/
+│   └── dashboard.css                          # Estilos de los controles (Dash sirve esta carpeta)
+├── src/                                       # Aplicación de Dash
+│   ├── dashboard.py                           # Construye la app: layout + callbacks
+│   ├── layout.py                              # Barra lateral, indicadores y paneles
+│   ├── callbacks.py                           # Reestima el modelo y redibuja todo
+│   ├── data.py                                # Carga de datos y motor de regresión
+│   └── theme.py                               # Paleta, tipografía y componentes
 ├── data/
 │   ├── dataset/
 │   │   └── viviendas.csv                      # 150 apartamentos (semilla 42, reproducible)
@@ -69,12 +79,14 @@ La pregunta es una sola y se responde en cuatro pasos:
 │   └── assets/
 │       └── images/
 │           ├── Logo.png                       # Logo institucional
+│           ├── UnisalleDarkLogoV1.png         # Versión para fondo oscuro (barra lateral)
 │           ├── author/                        # Foto del autor
 │           └── figures/
 │               ├── python/
 │               │   ├── regression/            # 4 figuras de Matplotlib
 │               │   ├── advanced/              # 3 figuras de seaborn
-│               │   └── dashboard/             # 2 piezas interactivas de Plotly (HTML + PNG)
+│               │   └── dashboard/             # 2 piezas de Plotly (HTML + PNG)
+│               │                              #   y 2 capturas del dashboard de Dash
 │               └── r/                         # 3 figuras de ggplot2
 └── utils/
     └── codes/
@@ -120,8 +132,9 @@ Cinco scripts, uno por fase. El flujo es **secuencial**: la Fase 1 genera el dat
 | `scikit-learn` | 1.9.0 | Partición entrenamiento/prueba y validación cruzada |
 | `matplotlib` | 3.11.1 | Figuras de ajuste, residuos, efectos y validación |
 | `seaborn` | 0.13.2 | Matriz de dispersión, mapa de calor y ajuste por estrato |
-| `plotly` | 6.9.0 | Tablero interactivo y dispersión explorable |
+| `plotly` | 6.9.0 | Piezas interactivas en HTML y figuras del dashboard |
 | `kaleido` | 1.3.0 | Motor que exporta las figuras de Plotly a PNG |
+| `dash` | 4.4.1 | Dashboard que reestima el modelo sobre la selección |
 
 ### R
 
@@ -149,13 +162,18 @@ python utils/codes/python/visualization.py
 
 # 3. Fase 5: verificación en R
 Rscript utils/codes/R/regression.R
+
+# 4. Dashboard interactivo (opcional, necesita las fases anteriores)
+python app.py                   # http://localhost:8050/
 ```
 
-Si `Rscript` no está en el `PATH` de Git Bash, añádelo a la sesión antes del último paso:
+Si `Rscript` no está en el `PATH` de Git Bash, añádelo a la sesión antes del paso 3:
 
 ```bash
 export PATH="/c/Program Files/R/R-4.6.1/bin:$PATH"
 ```
+
+> ℹ️ El dashboard **no** es un archivo que se abra con doble clic: levanta un servidor local con `python app.py` y se consulta en el navegador. Las dos piezas de Plotly (`dashboard.html` y `dispersion_interactiva.html`) sí son autónomas y no necesitan nada instalado.
 
 ---
 
@@ -305,6 +323,45 @@ Tres lecturas de esta tabla:
 
 ---
 
+## 🖥️ Dashboard interactivo en Dash
+
+Los dos HTML anteriores tienen un límite de fondo: **sus paneles están precalculados**, así que el menú solo enciende y apaga puntos ya dibujados. La recta que se ve sigue siendo la del modelo global aunque el lector aísle un estrato.
+
+La aplicación de **Dash** levanta esa restricción: **reestima la regresión** sobre el subconjunto seleccionado.
+
+```bash
+python app.py          # http://localhost:8050/
+```
+
+<div align="center">
+    <img src="public/assets/images/figures/python/dashboard/dashboard_dash.png" width="960" alt="Dashboard de Dash con los 150 apartamentos">
+</div>
+
+La barra lateral ofrece tres filtros —**estrato**, **rango de área** y **antigüedad máxima**— y un selector entre el modelo **simple** y el **múltiple**. Con cada cambio la aplicación vuelve a ajustar por mínimos cuadrados y actualiza los cinco indicadores, los cuatro paneles y la tabla de coeficientes.
+
+### Por qué reestimar no es lo mismo que filtrar
+
+<div align="center">
+    <img src="public/assets/images/figures/python/dashboard/dashboard_dash_filtrado.png" width="960" alt="El mismo dashboard restringido al estrato 5">
+</div>
+
+Al restringir la vista al **estrato 5** el tablero no se limita a esconder puntos:
+
+| | Los 150 | Solo estrato 5 |
+|---|---|---|
+| Apartamentos | 150 | **37** |
+| R² | 0,896 | **0,755** |
+| Error medio | 33,1 (7,7 %) | **31,6 (6,1 %)** |
+| Valor del m² | 3,80 millones | **3,38 millones** |
+| Habitaciones | **+16,0**, p = 9,2 × 10⁻⁶ | +14,1, **p = 0,073 (no significativo)** |
+
+Y aparecen dos comportamientos que ningún filtro visual puede mostrar:
+
+- **La columna `estrato` se descarta del ajuste** y el tablero lo avisa. Dentro de un solo estrato esa variable es constante, y una variable sin variación no puede explicar diferencias de precio; dejarla haría singular la matriz de diseño.
+- **El efecto de las habitaciones deja de ser significativo.** Con 37 observaciones su intervalo de confianza pasa a ser [−1,39 ; 29,60], que cruza el cero. Es la tesis del laboratorio vista en sentido inverso: un efecto real puede desaparecer no solo por medirlo sin controlar las demás variables, sino también por medirlo sobre muy pocos datos.
+
+---
+
 ## 🔁 Fase 5 · Verificación en R
 
 `lm()` reestima los mismos modelos y **coincide dígito a dígito** con `statsmodels`:
@@ -346,7 +403,7 @@ El contraste F de `anova()` entre los dos modelos da **F = 135,63** con p < 2,2 
 
 ## 🔑 Palabras Clave
 
-`Análisis de Regresión` · `Regresión Lineal Simple` · `Regresión Lineal Múltiple` · `statsmodels` · `scikit-learn` · `Validación Cruzada` · `Visualización Avanzada` · `Matplotlib` · `seaborn` · `Plotly` · `Dashboard Interactivo` · `ggplot2` · `R` · `Ciencia de Datos` · `Python`
+`Análisis de Regresión` · `Regresión Lineal Simple` · `Regresión Lineal Múltiple` · `statsmodels` · `scikit-learn` · `Validación Cruzada` · `Visualización Avanzada` · `Matplotlib` · `seaborn` · `Plotly` · `Dash` · `Dashboard Interactivo` · `ggplot2` · `R` · `Ciencia de Datos` · `Python`
 
 ---
 
